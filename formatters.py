@@ -24,7 +24,7 @@ class DictFormatter(logging.Formatter):
     def formatException(self, ei):
         lines = traceback.format_exception(*ei)
         lines = [
-            filter(lambda item: (item, line.rstrip().splitlines()))
+            filter(lambda item: item, line.rstrip().splitlines()) # Filter empty strings & split by lines
             for line in lines
         ]
         lines = list(itertools.chain(*lines))
