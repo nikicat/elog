@@ -127,14 +127,19 @@ class _Sender(threading.Thread):
     ### Override ###
 
     def run(self):
-        while True:
+        while threading._shutdown.__self__.is_alive() or self._queue.qsize(): # pylint: disable=W0212
+            # After sending a message in the log, we get the main thread object
+            # and check if he is alive. If not - stop sending logs.
+            # If the queue still have messages - process them.
+
             items = []
             try:
                 timeout = self._log_timeout
                 while len(items) < self._bulk_size:
                     start = time.time()
-                    items.append(self._queue.get(timeout=timeout))
-                    timeout -= time.time() - start
+                    items.append(self._queue.get(timeout=max(timeout, 0)))
+                    self._queue.task_done()
+                    timeout -= time.time() - start # TODO: Considerate a sending time
             except queue.Empty:
                 pass # Send data by timeout
 
@@ -142,15 +147,12 @@ class _Sender(threading.Thread):
                 self._send_messages(items)
                 items = []
 
-            if not threading._shutdown.__self__.is_alive(): # pylint: disable=W0212
-                # After sending a message in the log, we get the main thread object
-                # and check if he is alive. If not - stop sending logs.
-                break
-
 
     ### Private ###
 
     def _send_messages(self, messages):
+        # See for details:
+        #   http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/docs-bulk.html
         bulk = ""
         for msg in messages:
             bulk += "{}\n{}\n".format(
@@ -161,14 +163,14 @@ class _Sender(threading.Thread):
         self._send_request(request)
 
     def _send_request(self, request):
-        retries = self._retries_sleep
+        retries = self._retries
         while True:
             try:
                 urllib.request.build_opener().open(request, timeout=self._url_timeout)
                 break
             except (socket.timeout, urllib.error.URLError):
                 if retries == 0:
-                    # FIXME: log
+                    _logger.exception("ElasticHandler could not send %d records after %d retries", self._bulk_size, self._retries)
                     break
                 retries -= 1
                 time.sleep(self._retries_sleep)
