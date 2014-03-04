@@ -121,20 +121,24 @@ class _Sender(threading.Thread):
     ### Public ###
 
     def send(self, msg):
-        self._queue.put(msg)
+        if self._is_main_thread_alive():
+            # While the application works - we accept the message to send
+            self._queue.put(msg)
 
 
     ### Override ###
 
     def run(self):
-        while threading._shutdown.__self__.is_alive() or self._queue.qsize(): # pylint: disable=W0212
+        while self._is_main_thread_alive() or self._queue.qsize():
             # After sending a message in the log, we get the main thread object
             # and check if he is alive. If not - stop sending logs.
             # If the queue still have messages - process them.
 
             items = []
             try:
-                timeout = self._log_timeout
+                # If application is dead, quickly dismantle the remaining queue and break the cycle.
+                timeout = ( self._log_timeout if self._is_main_thread_alive() else 0 )
+
                 while len(items) < self._bulk_size:
                     start = time.time()
                     items.append(self._queue.get(timeout=max(timeout, 0)))
@@ -149,6 +153,9 @@ class _Sender(threading.Thread):
 
 
     ### Private ###
+
+    def _is_main_thread_alive(self):
+        return threading._shutdown.__self__.is_alive() # pylint: disable=W0212
 
     def _send_messages(self, messages):
         # See for details:
@@ -170,7 +177,7 @@ class _Sender(threading.Thread):
                 break
             except (socket.timeout, urllib.error.URLError):
                 if retries == 0:
-                    _logger.exception("ElasticHandler could not send %d records after %d retries", self._bulk_size, self._retries)
+                    _logger.exception("ElasticHandler could not send %d log records after %d retries", self._bulk_size, self._retries)
                     break
                 retries -= 1
                 time.sleep(self._retries_sleep)
