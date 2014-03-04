@@ -24,7 +24,7 @@ class ElasticHandler(logging.Handler):
             log-%Y-%m-%d -- index
             gns-elog -- doctype
 
-        Requires elog.formatters.DictFormatter (or his child class) for working.
+        Requires formatter that returns dict instead of string.
     """
 
     def __init__(self, url, timeout=socket._GLOBAL_DEFAULT_TIMEOUT): # pylint: disable=W0212
@@ -34,6 +34,7 @@ class ElasticHandler(logging.Handler):
 
     def emit(self, record):
         msg = self.format(record)
+        assert isinstance(msg, dict)
         url = self._url.format(**msg)
         url = time.strftime(url, time.gmtime(record.created))
         request = urllib.request.Request(url, data=json.dumps(msg).encode())
