@@ -201,5 +201,5 @@ class _DatetimeEncoder(json.JSONEncoder):
     def default(self, obj): # pylint: disable=E0202
         if isinstance(obj, datetime.datetime):
             return format(obj, self._time_format)
-        return json.JSONEncoder.default(self, obj)
+        return repr(obj) # Convert non-encodable objects to string
 
