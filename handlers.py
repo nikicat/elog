@@ -13,20 +13,20 @@ class ElasticHandler(logging.Handler):
             elastic:
                 level: DEBUG
                 class: elog.handlers.ElasticHandler
-                url: http://example.com:9200/log-{utc:%Y}-{utc:%m}-{utc:%d}/gns2
                 time_field: "@timestamp"
-                time_format: "{utc:%Y}-{utc:%m}-{utc:%d}T{utc:%H}:{utc:%M}:{utc:%S}.{utc:%f}"
+                time_format: "%Y-%m-%dT%H:%M:%S.%f"
+                url: http://example.com:9200/log-{@timestamp:%Y}-{@timestamp:%m}-{@timestamp:%d}/gns2
             ...
 
         URL components:
             example.com:9200 -- host/port
-            log-{utc:%Y}-{utc:%m}-{utc:%d} -- index
+            log-{@timestamp:%Y}-{@timestamp:%m}-{@timestamp:%d} -- index
             gns2 -- doctype
 
         The class does not use any formatters.
     """
 
-    def __init__(self, url, timeout=socket._GLOBAL_DEFAULT_TIMEOUT, time_field=None, time_format=None): # pylint: disable=W0212
+    def __init__(self, url, timeout=socket._GLOBAL_DEFAULT_TIMEOUT, time_field="time", time_format="%s"): # pylint: disable=W0212
         logging.Handler.__init__(self)
         self._url = url
         self._timeout = timeout
@@ -38,16 +38,14 @@ class ElasticHandler(logging.Handler):
         # Formatters are not used
         msg = self._make_message(record)
         url = self._url.format(**msg)
-        del msg["utc"] # Remove the inner object utc
-        request = urllib.request.Request(url, data=json.dumps(msg).encode())
+        msg_json = json.dumps(msg, cls=_DatetimeEncoder, time_format=self._time_format)
+        request = urllib.request.Request(url, data=msg_json.encode())
         urllib.request.build_opener().open(request, timeout=self._timeout)
 
     def _make_message(self, record):
         msg = {
             name: getattr(record, item)
             for (name, item) in (
-                ("time",      "created"),
-                ("msecs",     "msecs"),
                 ("logger",    "name"),
                 ("level",     "levelname"),
                 ("level_no",  "levelno"),
@@ -66,8 +64,16 @@ class ElasticHandler(logging.Handler):
             )
             if hasattr(record, item)
         }
-        msg["utc"] = datetime.datetime.utcfromtimestamp(record.created) # Only for config placeholders
-        if self._time_field is not None:
-            msg[self._time_field] = self._time_format.format(**msg)
+        msg[self._time_field] = datetime.datetime.utcfromtimestamp(record.created)
         return msg
+
+class _DatetimeEncoder(json.JSONEncoder):
+    def __init__(self, time_format, *args, **kwargs):
+        json.JSONEncoder.__init__(self, *args, **kwargs)
+        self._time_format = time_format
+
+    def default(self, obj): # pylint: disable=E0202
+        if isinstance(obj, datetime.datetime):
+            return format(obj, self._time_format)
+        return json.JSONEncoder.default(self, obj)
 
