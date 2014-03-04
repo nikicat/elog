@@ -32,11 +32,6 @@ class ElasticHandler(logging.Handler):
         self._url = url
         self._timeout = timeout
 
-    def setFormatter(self, fmt):
-        if not isinstance(fmt, formatters.DictFormatter):
-            raise RuntimeError("{} requires a DictFormatter".format(self.__class__.__name__))
-        self.formatter = fmt
-
     def emit(self, record):
         msg = self.format(record)
         url = self._url.format(**msg)
