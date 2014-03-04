@@ -1,5 +1,3 @@
-import traceback
-import itertools
 import logging
 import time
 
@@ -20,15 +18,6 @@ class DictFormatter(logging.Formatter):
         logging.Formatter.__init__(self)
         self._time_field = time_field
         self._time_format = time_format
-
-    def formatException(self, ei):
-        lines = traceback.format_exception(*ei)
-        lines = [
-            filter(lambda item: item, line.rstrip().splitlines()) # Filter empty strings & split by lines
-            for line in lines
-        ]
-        lines = list(itertools.chain(*lines))
-        return lines
 
     def format(self, record):
         msg = {
