@@ -132,12 +132,14 @@ class ElasticHandler(logging.Handler, threading.Thread):
                 ("func",      "funcName"),
                 ("pid",       "process"),
                 ("process",   "processName"),
-                ("tid",       "tid"), # Linux TID (from elog.records.LogRecord)
-                ("fqdn",      "fqdn"), # Hostname (from elog.records.LogRecord)
                 ("thread",    "threadName"),
                 ("thread_id", "thread"), # Python-specific thread id
                 ("exc_text",  "exc_text"), # Text exception
                 ("extra",     "extra"), # Custom fields
+                # From elog.records.LogRecord
+                ("tid",       "tid"), # Linux thread id
+                ("fqdn",      "fqdn"), # socket.getfqdn()
+                ("node",      "node"), # uname node
             )
             if hasattr(record, item)
         }
