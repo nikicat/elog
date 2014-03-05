@@ -95,33 +95,26 @@ class ElasticHandler(logging.Handler, threading.Thread):
     ### Override ###
 
     def run(self):
+        wait_until = time.time() + self._log_timeout
         while self.continue_processing() or not self._queue.empty():
             # After sending a message in the log, we get the main thread object
             # and check if he is alive. If not - stop sending logs.
             # If the queue still have messages - process them.
 
-            last_send = 0
+            if not self.continue_processing():
+                # If application is dead, quickly dismantle the remaining queue and break the cycle.
+                wait_until = 0
+
             items = []
             try:
-                if self.continue_processing():
-                    # Consider the last sending time
-                    timeout = max(self._log_timeout - last_send, 0)
-                else:
-                    # If application is dead, quickly dismantle the remaining queue and break the cycle.
-                    timeout = 0
-
                 while len(items) < self._bulk_size:
-                    start = time.time()
-                    items.append(self._queue.get(timeout=max(timeout, 0)))
+                    items.append(self._queue.get(timeout=max(wait_until - time.time(), 0)))
                     self._queue.task_done()
-                    timeout -= time.time() - start
             except queue.Empty:
-                pass # Send data by timeout
+                wait_until = time.time() + self._log_timeout
 
             if len(items) != 0:
-                start = time.time()
                 self._send_messages(items)
-                last_send = time.time() - start
 
 
     ### Private ###
