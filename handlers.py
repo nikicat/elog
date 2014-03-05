@@ -94,21 +94,28 @@ class ElasticHandler(logging.Handler, threading.Thread):
             # and check if he is alive. If not - stop sending logs.
             # If the queue still have messages - process them.
 
+            last_send = 0
             items = []
             try:
-                # If application is dead, quickly dismantle the remaining queue and break the cycle.
-                timeout = ( self._log_timeout if self._is_main_thread_alive() else 0 )
+                if self._is_main_thread_alive():
+                    # Consider the last sending time
+                    timeout = max(self._log_timeout - last_send, 0)
+                else:
+                    # If application is dead, quickly dismantle the remaining queue and break the cycle.
+                    timeout = 0
 
                 while len(items) < self._bulk_size:
                     start = time.time()
                     items.append(self._queue.get(timeout=max(timeout, 0)))
                     self._queue.task_done()
-                    timeout -= time.time() - start # TODO: Considerate a sending time
+                    timeout -= time.time() - start
             except queue.Empty:
                 pass # Send data by timeout
 
             if len(items) != 0:
+                start = time.time()
                 self._send_messages(items)
+                last_send = time.time() - start
 
 
     ### Private ###
