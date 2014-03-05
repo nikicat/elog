@@ -81,15 +81,21 @@ class ElasticHandler(logging.Handler, threading.Thread):
 
     def emit(self, record):
         # Formatters are not used
-        if self._is_main_thread_alive():
+        if self.continue_processing():
             # While the application works - we accept the message to send
             self._queue.put(self._make_message(record))
+
+    def continue_processing(self):
+        # This thread must be one of the last live threads. Usually, MainThread lives up to the completion of all the rest.
+        # We need to determine when it is completed and to stop sending and receiving messages.
+        # For our architecture that is enough. In other cases, you can override this method.
+        return threading._shutdown.__self__.is_alive() # pylint: disable=W0212
 
 
     ### Override ###
 
     def run(self):
-        while self._is_main_thread_alive() or not self._queue.empty():
+        while self.continue_processing() or not self._queue.empty():
             # After sending a message in the log, we get the main thread object
             # and check if he is alive. If not - stop sending logs.
             # If the queue still have messages - process them.
@@ -97,7 +103,7 @@ class ElasticHandler(logging.Handler, threading.Thread):
             last_send = 0
             items = []
             try:
-                if self._is_main_thread_alive():
+                if self.continue_processing():
                     # Consider the last sending time
                     timeout = max(self._log_timeout - last_send, 0)
                 else:
@@ -119,9 +125,6 @@ class ElasticHandler(logging.Handler, threading.Thread):
 
 
     ### Private ###
-
-    def _is_main_thread_alive(self):
-        return threading._shutdown.__self__.is_alive() # pylint: disable=W0212
 
     def _make_message(self, record):
         msg = {
