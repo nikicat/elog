@@ -153,11 +153,14 @@ class ElasticHandler(logging.Handler, threading.Thread):
         #   http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/docs-bulk.html
         bulks = []
         for msg in messages:
-            bulks += [
-                self._json_dumps(self._get_to(msg)),
-                self._json_dumps(msg),
-            ]
-        data = ("\n".join(bulks) + "\n").encode()
+            bulks.append({ # Data metainfo: index, doctype
+                    "index": {
+                        "_index": self._index.format(**msg),
+                        "_type":  self._doctype.format(**msg),
+                    },
+                })
+            bulks.append(msg) # Log record
+        data = ("\n".join(map(self._json_dumps, bulks)) + "\n").encode()
         request = urllib.request.Request(self._url+"/_bulk", data=data)
         self._send_request(request)
 
@@ -176,14 +179,6 @@ class ElasticHandler(logging.Handler, threading.Thread):
 
     def _json_dumps(self, obj):
         return json.dumps(obj, cls=_DatetimeEncoder, time_format=self._time_format)
-
-    def _get_to(self, msg):
-        return {
-            "index": {
-                "_index": self._index.format(**msg),
-                "_type":  self._doctype.format(**msg),
-            },
-        }
 
 class _DatetimeEncoder(json.JSONEncoder):
     def __init__(self, time_format, *args, **kwargs):
