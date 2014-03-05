@@ -129,7 +129,7 @@ class _Sender(threading.Thread):
     ### Override ###
 
     def run(self):
-        while self._is_main_thread_alive() or self._queue.qsize():
+        while self._is_main_thread_alive() or not self._queue.empty():
             # After sending a message in the log, we get the main thread object
             # and check if he is alive. If not - stop sending logs.
             # If the queue still have messages - process them.
@@ -149,7 +149,6 @@ class _Sender(threading.Thread):
 
             if len(items) != 0:
                 self._send_messages(items)
-                items = []
 
 
     ### Private ###
@@ -160,13 +159,14 @@ class _Sender(threading.Thread):
     def _send_messages(self, messages):
         # See for details:
         #   http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/docs-bulk.html
-        bulk = ""
+        bulks = []
         for msg in messages:
-            bulk += "{}\n{}\n".format(
+            bulks += [
                 self._json_dumps(self._get_to(msg)),
                 self._json_dumps(msg),
-            )
-        request = urllib.request.Request(self._url+"/_bulk", data=bulk.encode())
+            ]
+        data = ("\n".join(bulks) + "\n").encode()
+        request = urllib.request.Request(self._url+"/_bulk", data=data)
         self._send_request(request)
 
     def _send_request(self, request):
