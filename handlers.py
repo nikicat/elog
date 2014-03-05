@@ -133,6 +133,7 @@ class ElasticHandler(logging.Handler, threading.Thread):
                 ("pid",       "process"),
                 ("process",   "processName"),
                 ("tid",       "tid"), # Linux TID (from elog.records.LogRecord)
+                ("fqdn",      "fqdn"), # Hostname (from elog.records.LogRecord)
                 ("thread",    "threadName"),
                 ("thread_id", "thread"), # Python-specific thread id
                 ("exc_text",  "exc_text"), # Text exception
