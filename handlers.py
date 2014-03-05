@@ -14,7 +14,7 @@ _logger = logging.getLogger(__name__)
 
 
 ##### Public classes #####
-class ElasticHandler(logging.Handler):
+class ElasticHandler(logging.Handler, threading.Thread):
     """
         Example config:
             ...
@@ -45,56 +45,12 @@ class ElasticHandler(logging.Handler):
 
         The class does not use any formatters.
     """
-
-    def __init__(self, **kwargs):
-        logging.Handler.__init__(self)
-        self._time_field = kwargs.pop("time_field", "time")
-        self._sender = _Sender(**kwargs)
-        self._sender.start()
-
-
-    ### Public ###
-
-    def emit(self, record):
-        # Formatters are not used
-        self._sender.send(self._make_message(record))
-
-
-    ### Private ###
-
-    def _make_message(self, record):
-        msg = {
-            name: getattr(record, item)
-            for (name, item) in (
-                ("logger",    "name"),
-                ("level",     "levelname"),
-                ("level_no",  "levelno"),
-                ("msg",       "msg"),
-                ("args",      "args"),
-                ("file",      "pathname"),
-                ("line",      "lineno"),
-                ("func",      "funcName"),
-                ("pid",       "process"),
-                ("process",   "processName"),
-                ("tid",       "tid"), # Linux TID (from elog.records.LogRecord)
-                ("thread",    "threadName"),
-                ("thread_id", "thread"), # Python-specific thread id
-                ("exc_text",  "exc_text"), # Text exception
-                ("extra",     "extra"), # Custom fields
-            )
-            if hasattr(record, item)
-        }
-        msg[self._time_field] = datetime.datetime.utcfromtimestamp(record.created)
-        return msg
-
-
-##### Private classes #####
-class _Sender(threading.Thread):
     def __init__(
             self,
             url,
             index,
             doctype,
+            time_field="time",
             time_format="%s",
             queue_size=512,
             bulk_size=512,
@@ -103,11 +59,13 @@ class _Sender(threading.Thread):
             url_timeout=socket._GLOBAL_DEFAULT_TIMEOUT, # pylint: disable=W0212
             log_timeout=5,
         ):
+        logging.Handler.__init__(self)
         threading.Thread.__init__(self)
 
         self._url = url
         self._index = index
         self._doctype = doctype
+        self._time_field = time_field
         self._time_format = time_format
         self._bulk_size = bulk_size
         self._retries = retries
@@ -115,15 +73,17 @@ class _Sender(threading.Thread):
         self._url_timeout = url_timeout
         self._log_timeout = log_timeout
 
-        self._queue = queue.Queue(queue_size)
+        self._queue = queue.Queue()
+        self.start()
 
 
     ### Public ###
 
-    def send(self, msg):
+    def emit(self, record):
+        # Formatters are not used
         if self._is_main_thread_alive():
             # While the application works - we accept the message to send
-            self._queue.put(msg)
+            self._queue.put(self._make_message(record))
 
 
     ### Override ###
@@ -155,6 +115,31 @@ class _Sender(threading.Thread):
 
     def _is_main_thread_alive(self):
         return threading._shutdown.__self__.is_alive() # pylint: disable=W0212
+
+    def _make_message(self, record):
+        msg = {
+            name: getattr(record, item)
+            for (name, item) in (
+                ("logger",    "name"),
+                ("level",     "levelname"),
+                ("level_no",  "levelno"),
+                ("msg",       "msg"),
+                ("args",      "args"),
+                ("file",      "pathname"),
+                ("line",      "lineno"),
+                ("func",      "funcName"),
+                ("pid",       "process"),
+                ("process",   "processName"),
+                ("tid",       "tid"), # Linux TID (from elog.records.LogRecord)
+                ("thread",    "threadName"),
+                ("thread_id", "thread"), # Python-specific thread id
+                ("exc_text",  "exc_text"), # Text exception
+                ("extra",     "extra"), # Custom fields
+            )
+            if hasattr(record, item)
+        }
+        msg[self._time_field] = datetime.datetime.utcfromtimestamp(record.created)
+        return msg
 
     def _send_messages(self, messages):
         # See for details:
