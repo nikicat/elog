@@ -26,6 +26,14 @@ class ElasticHandler(logging.Handler, threading.Thread):
                 url: http://example.com/9200
                 index: log-{@timestamp:%Y}-{@timestamp:%m}-{@timestamp:%d}
                 doctype: gns2
+                fields:
+                    logger:    name
+                    level:     levelname
+                    msg:       msg
+                    args:      args
+                    file:      pathname
+                    line:      lineno
+                    pid:       process
             ...
 
         Required arguments:
@@ -34,6 +42,7 @@ class ElasticHandler(logging.Handler, threading.Thread):
             doctype
 
         Optional arguments:
+            fields         -- A dictionary with mapping LogRecord fields to ElasticSearch fields
             time_field     -- Timestamp field name
             time_format    -- Timestamp format
             queue_size     -- The maximum size of the send queue, after which the caller thread is blocked
@@ -45,11 +54,12 @@ class ElasticHandler(logging.Handler, threading.Thread):
 
         The class does not use any formatters.
     """
-    def __init__(
+    def __init__( # pylint: disable=R0913
             self,
             url,
             index,
             doctype,
+            fields=None,
             time_field="time",
             time_format="%s",
             queue_size=512,
@@ -65,6 +75,7 @@ class ElasticHandler(logging.Handler, threading.Thread):
         self._url = url
         self._index = index
         self._doctype = doctype
+        self._fields = ( fields or {} )
         self._time_field = time_field
         self._time_format = time_format
         self._bulk_size = bulk_size
@@ -121,26 +132,7 @@ class ElasticHandler(logging.Handler, threading.Thread):
     def _make_message(self, record):
         msg = {
             name: getattr(record, item)
-            for (name, item) in (
-                ("logger",    "name"),
-                ("level",     "levelname"),
-                ("level_no",  "levelno"),
-                ("msg",       "msg"),
-                ("args",      "args"),
-                ("file",      "pathname"),
-                ("line",      "lineno"),
-                ("func",      "funcName"),
-                ("pid",       "process"),
-                ("process",   "processName"),
-                ("thread",    "threadName"),
-                ("thread_id", "thread"), # Python-specific thread id
-                ("exc_text",  "exc_text"), # Text exception
-                ("extra",     "extra"), # Custom fields
-                # From elog.records.LogRecord
-                ("tid",       "tid"), # Linux thread id
-                ("fqdn",      "fqdn"), # socket.getfqdn()
-                ("node",      "node"), # uname node
-            )
+            for (name, item) in self._fields.items()
             if hasattr(record, item)
         }
         msg[self._time_field] = datetime.datetime.utcfromtimestamp(record.created)
