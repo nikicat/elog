@@ -16,7 +16,7 @@ class LogRecord(logging.LogRecord):
     def __init__(self, *args, **kwargs):
         logging.LogRecord.__init__(self, *args, **kwargs)
         self.tid = _gettid()
-        self.fqdn = _cached_getfqdn(int(time.time() / 3600)) # Cached value FQDN, updated every hour
+        self.fqdn = _cached_getfqdn(int(time.time() / 60)) # Cached value FQDN, updated every minute
         self.node = platform.uname()[1] # Nodename from uname
 
 
