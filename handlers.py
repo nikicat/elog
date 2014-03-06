@@ -152,9 +152,7 @@ class ElasticHandler(logging.Handler, threading.Thread):
             bulks.append(msg) # Log record
         data = ("\n".join(map(self._json_dumps, bulks)) + "\n").encode()
         request = urllib.request.Request(self._url+"/_bulk", data=data)
-        self._send_request(request)
 
-    def _send_request(self, request):
         retries = self._retries
         while True:
             try:
@@ -162,7 +160,7 @@ class ElasticHandler(logging.Handler, threading.Thread):
                 break
             except (socket.timeout, urllib.error.URLError):
                 if retries == 0:
-                    _logger.exception("ElasticHandler could not send %d log records after %d retries", self._bulk_size, self._retries)
+                    _logger.exception("ElasticHandler could not send %d log records after %d retries", len(messages), self._retries)
                     break
                 retries -= 1
                 time.sleep(self._retry_interval)
