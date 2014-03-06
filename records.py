@@ -22,20 +22,25 @@ class LogRecord(logging.LogRecord):
 
 ##### Private methods #####
 def _make_gettid():
+    fallback = ( lambda: None )
     if sys.platform.startswith("linux") and cffi is not None:
-        ffi = cffi.FFI()
-        ffi.cdef("int linux_gettid(void);")
-        lib = ffi.verify("""
-                #include <unistd.h>
-                #include <sys/syscall.h>
-                int linux_gettid(void) {
-                    return syscall(SYS_gettid);
-                }
-            """)
-        gettid = ( lambda: lib.linux_gettid() ) # pylint: disable=E1101,W0108
-        # Lambda is needed because without it segfault happens
+        try:
+            ffi = cffi.FFI()
+            ffi.cdef("int linux_gettid(void);")
+            lib = ffi.verify("""
+                    #include <unistd.h>
+                    #include <sys/syscall.h>
+                    int linux_gettid(void) {
+                        return syscall(SYS_gettid);
+                    }
+                """)
+            # Lambda is needed because without it segfault happens
+            gettid = ( lambda: lib.linux_gettid() ) # pylint: disable=E1101,W0108
+        except Exception:
+            logging.getLogger().exception("Cannot construct CFFI interface to gettid(), logging of TID will be unavailable")
+            gettid = fallback
     else:
-        gettid = ( lambda: None ) # Fallback
+        gettid = fallback
     return gettid
 _gettid = _make_gettid()
 
