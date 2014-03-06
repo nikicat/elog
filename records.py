@@ -2,6 +2,8 @@ import sys
 import socket
 import platform
 import logging
+import functools
+import time
 
 try:
     import cffi
@@ -14,7 +16,7 @@ class LogRecord(logging.LogRecord):
     def __init__(self, *args, **kwargs):
         logging.LogRecord.__init__(self, *args, **kwargs)
         self.tid = _gettid()
-        self.fqdn = socket.getfqdn()
+        self.fqdn = _cached_getfqdn(int(time.time() / 3600)) # Cached value FQDN, updated every hour
         self.node = platform.uname()[1] # Nodename from uname
 
 
@@ -36,4 +38,8 @@ def _make_gettid():
         gettid = ( lambda: None ) # Fallback
     return gettid
 _gettid = _make_gettid()
+
+@functools.lru_cache(1)
+def _cached_getfqdn(every):
+    return socket.getfqdn()
 
