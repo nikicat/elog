@@ -100,7 +100,13 @@ class ElasticHandler(logging.Handler, threading.Thread):
         # This thread must be one of the last live threads. Usually, MainThread lives up to the completion of all the rest.
         # We need to determine when it is completed and to stop sending and receiving messages.
         # For our architecture that is enough. In other cases, you can override this method.
-        return threading._shutdown.__self__.is_alive() # pylint: disable=W0212
+
+        if hasattr(threading, "main_thread"): # Python >= 3.4
+            main_thread = threading.main_thread() # pylint: disable=E1101
+        else: # Dirty hack for Python <= 3.3
+            main_thread = threading._shutdown.__self__ # pylint: disable=W0212
+
+        return main_thread.is_alive()
 
 
     ### Override ###
