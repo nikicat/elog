@@ -84,7 +84,7 @@ class ElasticHandler(logging.Handler, threading.Thread):
         self._url_timeout = url_timeout
         self._log_timeout = log_timeout
 
-        self._queue = queue.Queue()
+        self._queue = queue.Queue(queue_size)
         self.start()
 
 
