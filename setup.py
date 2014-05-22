@@ -2,15 +2,14 @@
 
 
 import setuptools
-import elog.const
 
 
 ##### Main #####
 if __name__ == "__main__":
     setuptools.setup(
         name="elog",
-        version=elog.const.VERSION,
-        url=elog.const.UPSTREAM_URL,
+        version="0.3",
+        url="https://github.com/yandex-sysmon/elog",
         license="LGPLv3",
         author="Devaev Maxim",
         author_email="mdevaev@gmail.com",
@@ -21,7 +20,7 @@ if __name__ == "__main__":
             "elog",
         ),
 
-        classifiers=( # http://pypi.python.org/pypi?:action=list_classifiers
+        classifiers=(  # http://pypi.python.org/pypi?:action=list_classifiers
             "Development Status :: 2 - Pre-Alpha",
             "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
             "Operating System :: OS Independent",
@@ -31,4 +30,3 @@ if __name__ == "__main__":
             "Topic :: System :: Logging",
         ),
     )
-

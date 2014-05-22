@@ -14,7 +14,7 @@ _logger = logging.getLogger(__name__)
 
 
 ##### Public classes #####
-class ElasticHandler(logging.Handler, threading.Thread):
+class ElasticHandler(logging.Handler, threading.Thread):  # pylint: disable=R0902,R0904
     """
         Example config:
             ...
@@ -54,7 +54,7 @@ class ElasticHandler(logging.Handler, threading.Thread):
 
         The class does not use any formatters.
     """
-    def __init__( # pylint: disable=R0913
+    def __init__(  # pylint: disable=R0913
             self,
             url,
             index,
@@ -66,7 +66,7 @@ class ElasticHandler(logging.Handler, threading.Thread):
             bulk_size=512,
             retries=5,
             retry_interval=1,
-            url_timeout=socket._GLOBAL_DEFAULT_TIMEOUT, # pylint: disable=W0212
+            url_timeout=socket._GLOBAL_DEFAULT_TIMEOUT,  # pylint: disable=W0212
             log_timeout=5,
         ):
         logging.Handler.__init__(self)
@@ -96,15 +96,16 @@ class ElasticHandler(logging.Handler, threading.Thread):
             # While the application works - we accept the message to send
             self._queue.put(self._make_message(record))
 
-    def continue_processing(self):
-        # This thread must be one of the last live threads. Usually, MainThread lives up to the completion of all the rest.
-        # We need to determine when it is completed and to stop sending and receiving messages.
-        # For our architecture that is enough. In other cases, you can override this method.
+    def continue_processing(self):  # pylint: disable=R0201
+        # This thread must be one of the last live threads. Usually, MainThread lives up to the
+        # completion of all the rest. We need to determine when it is completed and to stop sending
+        # and receiving messages. For our architecture that is enough. In other cases, you can
+        # override this method.
 
-        if hasattr(threading, "main_thread"): # Python >= 3.4
-            main_thread = threading.main_thread() # pylint: disable=E1101
-        else: # Dirty hack for Python <= 3.3
-            main_thread = threading._shutdown.__self__ # pylint: disable=W0212
+        if hasattr(threading, "main_thread"):  # Python >= 3.4
+            main_thread = threading.main_thread()  # pylint: disable=E1101
+        else:  # Dirty hack for Python <= 3.3
+            main_thread = threading._shutdown.__self__  # pylint: disable=W0212,E1101
 
         return main_thread.is_alive()
 
@@ -149,15 +150,15 @@ class ElasticHandler(logging.Handler, threading.Thread):
         #   http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/docs-bulk.html
         bulks = []
         for msg in messages:
-            bulks.append({ # Data metainfo: index, doctype
+            bulks.append({  # Data metainfo: index, doctype
                     "index": {
                         "_index": self._index.format(**msg),
                         "_type":  self._doctype.format(**msg),
                     },
                 })
-            bulks.append(msg) # Log record
+            bulks.append(msg)  # Log record
         data = ("\n".join(map(self._json_dumps, bulks)) + "\n").encode()
-        request = urllib.request.Request(self._url+"/_bulk", data=data)
+        request = urllib.request.Request(self._url + "/_bulk", data=data)
 
         retries = self._retries
         while True:
@@ -166,7 +167,8 @@ class ElasticHandler(logging.Handler, threading.Thread):
                 break
             except (socket.timeout, urllib.error.URLError):
                 if retries == 0:
-                    _logger.exception("ElasticHandler could not send %d log records after %d retries", len(messages), self._retries)
+                    _logger.exception("ElasticHandler could not send %d log records after %d retries",
+                        len(messages), self._retries)
                     break
                 retries -= 1
                 time.sleep(self._retry_interval)
@@ -174,13 +176,13 @@ class ElasticHandler(logging.Handler, threading.Thread):
     def _json_dumps(self, obj):
         return json.dumps(obj, cls=_DatetimeEncoder, time_format=self._time_format)
 
+
 class _DatetimeEncoder(json.JSONEncoder):
     def __init__(self, time_format, *args, **kwargs):
         json.JSONEncoder.__init__(self, *args, **kwargs)
         self._time_format = time_format
 
-    def default(self, obj): # pylint: disable=E0202
+    def default(self, obj):  # pylint: disable=E0202
         if isinstance(obj, datetime.datetime):
             return format(obj, self._time_format)
-        return repr(obj) # Convert non-encodable objects to string
-
+        return repr(obj)  # Convert non-encodable objects to string
