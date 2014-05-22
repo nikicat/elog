@@ -14,6 +14,6 @@ class LogRecord(logging.LogRecord):
 
 
 ##### Private methods #####
-@functools.lru_cache(1)
-def _cached_getfqdn(every):  # pylint: disable=W0613
+@functools.lru_cache(1)  # Python <= 3.3 -- pylint: disable=W0613
+def _cached_getfqdn(every):  # Python >= 3.4 -- pylint: disable=W0613
     return socket.getfqdn()
