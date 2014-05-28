@@ -23,7 +23,7 @@ class ElasticHandler(logging.Handler, threading.Thread):  # pylint: disable=R090
                 class: elog.handlers.ElasticHandler
                 time_field: "@timestamp"
                 time_format: "%Y-%m-%dT%H:%M:%S.%f"
-                url: http://example.com/9200
+                url: http://example.com:9200
                 index: log-{@timestamp:%Y}-{@timestamp:%m}-{@timestamp:%d}
                 doctype: gns2
                 fields:
