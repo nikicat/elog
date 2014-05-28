@@ -9,7 +9,6 @@ ElasticSearch logging handler and tools.
 
 Example
 ------
-
 ```python
 import elog.records
 import logging
@@ -21,7 +20,7 @@ config = {"version": 1,
                 "class": "elog.handlers.ElasticHandler",
                 "time_field": "@timestamp",
                 "time_format": "%Y-%m-%dT%H:%M:%S.%f",
-                "url": "http://example.com/9200",
+                "url": "http://example.com:9200",
                 "index": "log-{@timestamp:%Y}-{@timestamp:%m}-{@timestamp:%d}",
                 "doctype": "example",
                 "fields":
@@ -41,5 +40,12 @@ logging.setLogRecordFactory(elog.records.LogRecord)
 logging.captureWarnings(True)
 
 logger = logging.getLogger(__name__)
-
+logger.debug("test message %s", 12345)
 ```
+
+To get your log message:
+
+```bash
+curl http://example.com:9200/log-2014-05-28/example/_search
+```
+**Note:** put your *current* `year-month-day` instead of `2014-05-28`.
