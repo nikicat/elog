@@ -6,7 +6,7 @@ python:
 install: "pip install tox coveralls"
 script: tox
 after_success:
-    - /usr/lib/pypy3/bin/coveralls
+    - coveralls
 notifications:
     hipchat:
         rooms:
