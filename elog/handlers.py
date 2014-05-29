@@ -69,7 +69,7 @@ class ElasticHandler(logging.Handler, threading.Thread):  # pylint: disable=R090
             retry_interval=1,
             url_timeout=socket._GLOBAL_DEFAULT_TIMEOUT,  # pylint: disable=W0212
             log_timeout=5,
-            non_blocking=True
+            blocking=False
         ):
         logging.Handler.__init__(self)
         threading.Thread.__init__(self)
@@ -85,7 +85,7 @@ class ElasticHandler(logging.Handler, threading.Thread):  # pylint: disable=R090
         self._retry_interval = retry_interval
         self._url_timeout = url_timeout
         self._log_timeout = log_timeout
-        self._non_blocking = non_blocking
+        self._blocking = blocking
 
         self._queue = queue.Queue(queue_size)
         self.start()
@@ -97,13 +97,14 @@ class ElasticHandler(logging.Handler, threading.Thread):  # pylint: disable=R090
         # Formatters are not used
         if self.continue_processing():
             # While the application works - we accept the message to send
-            if self._non_blocking:
+            message = self._make_message(record)
+            if self._blocking:
                 try:
-                    self._queue.put(self._make_message(record), block=False)
+                    self._queue.put(message, block=False)
                 except queue.Full:
-                    print("Cant log message. Queue is full.", file=sys.stderr)
+                    print("Cant log message: '%s'. Queue is full." % message, file=sys.stderr)
             else:
-                self._queue.put(self._make_message(record))
+                self._queue.put(message)
 
     def continue_processing(self):  # pylint: disable=R0201
         # This thread must be one of the last live threads. Usually, MainThread lives up to the
