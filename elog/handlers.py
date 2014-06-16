@@ -1,8 +1,8 @@
 import threading
 import queue
 import socket
-import urllib.request
-import urllib.error
+import requests
+import requests.exceptions
 import json
 import logging
 import datetime
@@ -88,6 +88,12 @@ class ElasticHandler(logging.Handler, threading.Thread):  # pylint: disable=R090
         self._blocking = blocking
 
         self._queue = queue.Queue(queue_size)
+
+        # XXX: http://docs.python-requests.org/en/latest/user/advanced/
+        # Thanks to urllib3, keep-alive is 100% automatic within a session. Any requests that you
+        # make within a session will automatically reuse the appropriate connection.
+        self._session = requests.Session()
+
         self.start()
 
 
@@ -168,14 +174,13 @@ class ElasticHandler(logging.Handler, threading.Thread):  # pylint: disable=R090
                 })
             bulks.append(msg)  # Log record
         data = ("\n".join(map(self._json_dumps, bulks)) + "\n").encode()
-        request = urllib.request.Request(self._url + "/_bulk", data=data)
 
         retries = self._retries
         while True:
             try:
-                urllib.request.build_opener().open(request, timeout=self._url_timeout)
+                self._session.post(self._url + "/_bulk", data=data, timeout=self._url_timeout)
                 break
-            except (socket.timeout, urllib.error.URLError):
+            except requests.exceptions.RequestException:
                 if retries == 0:
                     _logger.exception("ElasticHandler could not send %d log records after %d retries",
                         len(messages), self._retries)

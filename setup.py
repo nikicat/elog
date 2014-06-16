@@ -16,11 +16,11 @@ if __name__ == "__main__":
         description="ElasticSearch logging handler and tools",
         platforms="any",
 
-        packages=(
+        packages=[
             "elog",
-        ),
+        ],
 
-        classifiers=(  # http://pypi.python.org/pypi?:action=list_classifiers
+        classifiers=[  # http://pypi.python.org/pypi?:action=list_classifiers
             "Development Status :: 2 - Pre-Alpha",
             "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
             "Operating System :: OS Independent",
@@ -28,5 +28,9 @@ if __name__ == "__main__":
             "Topic :: Software Development :: Libraries :: Python Modules",
             "Topic :: System :: Networking :: Monitoring",
             "Topic :: System :: Logging",
-        ),
+        ],
+
+        install_requires=[
+            "requests >= 2.3.0",
+        ]
     )
