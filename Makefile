@@ -2,10 +2,7 @@ all:
 	true
 
 pylint:
-	pylint --rcfile=pylint.ini \
-		elog \
-		*.py \
-		--output-format=colorized 2>&1 | less -SR
+	python -m tox -e pylint
 
 pypi:
 	python setup.py register
@@ -16,3 +13,5 @@ clean:
 	find . -type f -name '*.pyc' -delete
 	find . -type d -name __pycache__ -delete
 
+clean-all: clean
+	rm -rf .tox
