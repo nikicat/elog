@@ -1,3 +1,4 @@
+import sys
 import threading
 import queue
 import socket
@@ -5,9 +6,9 @@ import requests
 import requests.exceptions
 import json
 import logging
+import traceback
 import datetime
 import time
-import sys
 
 
 ##### Private objects #####
@@ -52,6 +53,8 @@ class ElasticHandler(logging.Handler, threading.Thread):  # pylint: disable=R090
             retry_interval -- Delay between attempts to send
             url_timeout    -- Socket timeout
             log_timeout    -- Maximum waiting time of sending
+            respawn_delay  -- If loop in the main thread a fails, it is restarted after X seconds, by default - 1
+            blocking       -- Block logging, if the queue is full, by default - False
 
         The class does not use any formatters.
     """
@@ -69,7 +72,8 @@ class ElasticHandler(logging.Handler, threading.Thread):  # pylint: disable=R090
             retry_interval=1,
             url_timeout=socket._GLOBAL_DEFAULT_TIMEOUT,  # pylint: disable=W0212
             log_timeout=5,
-            blocking=False
+            respawn_delay=1,
+            blocking=False,
         ):
         logging.Handler.__init__(self)
         threading.Thread.__init__(self)
@@ -85,6 +89,7 @@ class ElasticHandler(logging.Handler, threading.Thread):  # pylint: disable=R090
         self._retry_interval = retry_interval
         self._url_timeout = url_timeout
         self._log_timeout = log_timeout
+        self._respawn_delay = respawn_delay
         self._blocking = blocking
 
         self._queue = queue.Queue(queue_size)
@@ -108,7 +113,7 @@ class ElasticHandler(logging.Handler, threading.Thread):  # pylint: disable=R090
                 try:
                     self._queue.put(message, block=False)
                 except queue.Full:
-                    print("Cant log message: '%s'. Queue is full." % message, file=sys.stderr)
+                    _exc_stderr("Can't log the message: '{}'. Queue is full.".format(message))
             else:
                 self._queue.put(message)
 
@@ -147,7 +152,13 @@ class ElasticHandler(logging.Handler, threading.Thread):  # pylint: disable=R090
                 wait_until = time.time() + self._log_timeout
 
             if len(items) != 0:
-                self._send_messages(items)
+                try:
+                    self._send_messages(items)
+                except Exception:
+                    _exc_stderr("Exception occurred in the ElasticHandler loop, "
+                        "the process will be restarted in {} seconds".format(self._respawn_delay))
+                    self._session = requests.Session()  # Drop old session
+                    time.sleep(self._respawn_delay)
 
 
     ### Private ###
@@ -201,3 +212,9 @@ class _DatetimeEncoder(json.JSONEncoder):
         if isinstance(obj, datetime.datetime):
             return format(obj, self._time_format)
         return repr(obj)  # Convert non-encodable objects to string
+
+
+##### Private methods #####
+def _exc_stderr(msg):
+    print(msg, file=sys.stderr)
+    traceback.print_exc(file=sys.stderr)
