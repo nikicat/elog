@@ -67,12 +67,9 @@ class ElasticHandler(logging.Handler, threading.Thread):  # pylint: disable=R090
             time_field="time",
             time_format="%s",
             queue_size=512,
-            bulk_size=512,
-            retries=5,
-            retry_interval=1,
+            session_size=512,
+            session_timeout=5,
             url_timeout=socket._GLOBAL_DEFAULT_TIMEOUT,  # pylint: disable=W0212
-            log_timeout=5,
-            respawn_delay=1,
             blocking=False,
         ):
         logging.Handler.__init__(self)
@@ -84,31 +81,28 @@ class ElasticHandler(logging.Handler, threading.Thread):  # pylint: disable=R090
         self._fields = ( fields or {} )
         self._time_field = time_field
         self._time_format = time_format
-        self._bulk_size = bulk_size
-        self._retries = retries
-        self._retry_interval = retry_interval
+        self._session_size = session_size
+        self._session_timeout = session_timeout
         self._url_timeout = url_timeout
-        self._log_timeout = log_timeout
-        self._respawn_delay = respawn_delay
         self._blocking = blocking
 
         self._queue = queue.Queue(queue_size)
-
-        # XXX: http://docs.python-requests.org/en/latest/user/advanced/
-        # Thanks to urllib3, keep-alive is 100% automatic within a session. Any requests that you
-        # make within a session will automatically reuse the appropriate connection.
-        self._session = requests.Session()
-
         self.start()
 
 
     ### Public ###
 
     def emit(self, record):
-        # Formatters are not used
+        # Formatters are not used.
+        # While the application works - we accept the message to send.
         if self.continue_processing():
-            # While the application works - we accept the message to send
-            message = self._make_message(record)
+            message = {
+                name: getattr(record, item)
+                for (name, item) in self._fields.items()
+                if hasattr(record, item)
+            }
+            message[self._time_field] = datetime.datetime.utcfromtimestamp(record.created)
+
             if self._blocking:
                 try:
                     self._queue.put(message, block=False)
@@ -134,70 +128,40 @@ class ElasticHandler(logging.Handler, threading.Thread):  # pylint: disable=R090
     ### Override ###
 
     def run(self):
-        wait_until = time.time() + self._log_timeout
         while self.continue_processing() or not self._queue.empty():
             # After sending a message in the log, we get the main thread object
             # and check if he is alive. If not - stop sending logs.
             # If the queue still have messages - process them.
 
-            if not self.continue_processing():
-                # If application is dead, quickly dismantle the remaining queue and break the cycle.
-                wait_until = 0
-
-            items = []
-            try:
-                while len(items) < self._bulk_size:
-                    items.append(self._queue.get(timeout=max(wait_until - time.time(), 0)))
-            except queue.Empty:
-                wait_until = time.time() + self._log_timeout
-
-            if len(items) != 0:
-                try:
-                    self._send_messages(items)
-                except Exception:
-                    _exc_stderr("Exception occurred in the ElasticHandler loop, "
-                        "the process will be restarted in {} seconds".format(self._respawn_delay))
-                    self._session = requests.Session()  # Drop old session
-                    time.sleep(self._respawn_delay)
+            if not self._queue.empty():
+                thread = threading.Thread(target=self._consume_queue, daemon=True)
+                thread.start()
+                thread.join()
+            else:
+                time.sleep(1) # FIXME: peek queue
 
 
     ### Private ###
 
-    def _make_message(self, record):
-        msg = {
-            name: getattr(record, item)
-            for (name, item) in self._fields.items()
-            if hasattr(record, item)
-        }
-        msg[self._time_field] = datetime.datetime.utcfromtimestamp(record.created)
-        return msg
+    def _consume_queue(self):
+        requests.post(self._url + "/_bulk", data=self._generate_chunks(), timeout=self._url_timeout)
 
-    def _send_messages(self, messages):
-        # See for details:
-        #   http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/docs-bulk.html
-        bulks = []
-        for msg in messages:
-            bulks.append({  # Data metainfo: index, doctype
-                    "index": {
-                        "_index": self._index.format(**msg),
-                        "_type":  self._doctype.format(**msg),
-                    },
-                })
-            bulks.append(msg)  # Log record
-        data = ("\n".join(map(self._json_dumps, bulks)) + "\n").encode()
-
-        retries = self._retries
-        while True:
+    def _generate_chunks(self):
+        for _ in range(self._session_size):
             try:
-                self._session.post(self._url + "/_bulk", data=data, timeout=self._url_timeout)
+                message = self._queue.get(self._session_timeout)
+            except queue.Empty:
                 break
-            except requests.exceptions.RequestException:
-                if retries == 0:
-                    _logger.exception("ElasticHandler could not send %d log records after %d retries",
-                        len(messages), self._retries)
-                    break
-                retries -= 1
-                time.sleep(self._retry_interval)
+            data = ( "\n".join(map(self._json_dumps, [
+                    {  # Data metainfo: index, doctype
+                        "index": {
+                            "_index": self._index.format(**message),
+                            "_type":  self._doctype.format(**message),
+                        },
+                    },
+                    message,  # Log record
+                ])) + "\n" ).encode()
+            yield data
 
     def _json_dumps(self, obj):
         return json.dumps(obj, cls=_DatetimeEncoder, time_format=self._time_format)
