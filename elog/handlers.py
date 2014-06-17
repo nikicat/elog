@@ -102,7 +102,7 @@ class ElasticHandler(logging.Handler, threading.Thread):  # pylint: disable=R090
                 try:
                     self._queue.put(message, block=False)
                 except queue.Full:
-                    print("Can't log the message: '{}'. Queue is full.".format(message), file=sys.stderr)
+                    print("Dropping message '{}' because queue is full".format(message), file=sys.stderr)
             else:
                 self._queue.put(message)
 
