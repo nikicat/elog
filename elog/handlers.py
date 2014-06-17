@@ -3,10 +3,8 @@ import threading
 import queue
 import socket
 import requests
-import requests.exceptions
 import json
 import logging
-import traceback
 import datetime
 import time
 
@@ -104,7 +102,7 @@ class ElasticHandler(logging.Handler, threading.Thread):  # pylint: disable=R090
                 try:
                     self._queue.put(message, block=False)
                 except queue.Full:
-                    _exc_stderr("Can't log the message: '{}'. Queue is full.".format(message))
+                    print("Can't log the message: '{}'. Queue is full.".format(message), file=sys.stderr)
             else:
                 self._queue.put(message)
 
@@ -131,22 +129,24 @@ class ElasticHandler(logging.Handler, threading.Thread):  # pylint: disable=R090
             # If the queue still have messages - process them.
 
             if not self._queue.empty():
-                thread = threading.Thread(target=self._consume_queue, daemon=True)
-                thread.start()
-                thread.join()
+                try:
+                    # http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/docs-bulk.html
+                    # http://docs.python-requests.org/en/latest/user/advanced/
+                    requests.post(self._url + "/_bulk", data=self._generate_chunks(), timeout=self._url_timeout).text
+                except Exception:
+                    raise
+                    _logger.exception("Bulk-request error")
+                    time.sleep(1)
             else:
-                time.sleep(1) # FIXME: peek queue
+                time.sleep(1)
 
 
     ### Private ###
 
-    def _consume_queue(self):
-        requests.post(self._url + "/_bulk", data=self._generate_chunks(), timeout=self._url_timeout)
-
     def _generate_chunks(self):
         for _ in range(self._session_size):
             try:
-                message = self._queue.get(self._session_timeout)
+                message = self._queue.get(timeout=self._session_timeout)
             except queue.Empty:
                 break
             data = ( "\n".join(map(self._json_dumps, [
@@ -173,9 +173,3 @@ class _DatetimeEncoder(json.JSONEncoder):
         if isinstance(obj, datetime.datetime):
             return format(obj, self._time_format)
         return repr(obj)  # Convert non-encodable objects to string
-
-
-##### Private methods #####
-def _exc_stderr(msg):
-    print(msg, file=sys.stderr)
-    traceback.print_exc(file=sys.stderr)
