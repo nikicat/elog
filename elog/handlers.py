@@ -1,13 +1,12 @@
+import sys
 import threading
 import queue
 import socket
-import urllib.request
-import urllib.error
+import requests
 import json
 import logging
 import datetime
 import time
-import sys
 
 
 ##### Private objects #####
@@ -43,15 +42,14 @@ class ElasticHandler(logging.Handler, threading.Thread):  # pylint: disable=R090
             doctype
 
         Optional arguments:
-            fields         -- A dictionary with mapping LogRecord fields to ElasticSearch fields
-            time_field     -- Timestamp field name
-            time_format    -- Timestamp format
-            queue_size     -- The maximum size of the send queue, after which the caller thread is blocked
-            bulk_size      -- Number of messages in one session
-            retries        -- If the bulk will not be sent to N times, it will be lost
-            retry_interval -- Delay between attempts to send
-            url_timeout    -- Socket timeout
-            log_timeout    -- Maximum waiting time of sending
+            fields          -- A dictionary with mapping LogRecord fields to ElasticSearch fields (None).
+            time_field      -- Timestamp field name ("time").
+            time_format     -- Timestamp format ("%s").
+            queue_size      -- The maximum size of the send queue, after which the caller thread is blocked (512).
+            session_size    -- Number of messages per session (512).
+            session_timeout -- Close the connection if there were no messages during this time (5 seconds).
+            url_timeout     -- Socket timeout (default socket._GLOBAL_DEFAULT_TIMEOUT, in seconds).
+            blocking        -- Block logging, if the queue is full, (False).
 
         The class does not use any formatters.
     """
@@ -64,12 +62,10 @@ class ElasticHandler(logging.Handler, threading.Thread):  # pylint: disable=R090
             time_field="time",
             time_format="%s",
             queue_size=512,
-            bulk_size=512,
-            retries=5,
-            retry_interval=1,
+            session_size=512,
+            session_timeout=5,
             url_timeout=socket._GLOBAL_DEFAULT_TIMEOUT,  # pylint: disable=W0212
-            log_timeout=5,
-            blocking=False
+            blocking=False,
         ):
         logging.Handler.__init__(self)
         threading.Thread.__init__(self)
@@ -80,11 +76,9 @@ class ElasticHandler(logging.Handler, threading.Thread):  # pylint: disable=R090
         self._fields = ( fields or {} )
         self._time_field = time_field
         self._time_format = time_format
-        self._bulk_size = bulk_size
-        self._retries = retries
-        self._retry_interval = retry_interval
+        self._session_size = session_size
+        self._session_timeout = session_timeout
         self._url_timeout = url_timeout
-        self._log_timeout = log_timeout
         self._blocking = blocking
 
         self._queue = queue.Queue(queue_size)
@@ -94,15 +88,21 @@ class ElasticHandler(logging.Handler, threading.Thread):  # pylint: disable=R090
     ### Public ###
 
     def emit(self, record):
-        # Formatters are not used
+        # Formatters are not used.
+        # While the application works - we accept the message to send.
         if self.continue_processing():
-            # While the application works - we accept the message to send
-            message = self._make_message(record)
+            message = {
+                name: getattr(record, item)
+                for (name, item) in self._fields.items()
+                if hasattr(record, item)
+            }
+            message[self._time_field] = datetime.datetime.utcfromtimestamp(record.created)
+
             if self._blocking:
                 try:
                     self._queue.put(message, block=False)
                 except queue.Full:
-                    print("Cant log message: '%s'. Queue is full." % message, file=sys.stderr)
+                    print("Dropping message '{}' because queue is full".format(message), file=sys.stderr)
             else:
                 self._queue.put(message)
 
@@ -123,65 +123,43 @@ class ElasticHandler(logging.Handler, threading.Thread):  # pylint: disable=R090
     ### Override ###
 
     def run(self):
-        wait_until = time.time() + self._log_timeout
         while self.continue_processing() or not self._queue.empty():
             # After sending a message in the log, we get the main thread object
             # and check if he is alive. If not - stop sending logs.
             # If the queue still have messages - process them.
 
-            if not self.continue_processing():
-                # If application is dead, quickly dismantle the remaining queue and break the cycle.
-                wait_until = 0
-
-            items = []
-            try:
-                while len(items) < self._bulk_size:
-                    items.append(self._queue.get(timeout=max(wait_until - time.time(), 0)))
-            except queue.Empty:
-                wait_until = time.time() + self._log_timeout
-
-            if len(items) != 0:
-                self._send_messages(items)
+            if not self._queue.empty():
+                try:
+                    # http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/docs-bulk.html
+                    # http://docs.python-requests.org/en/latest/user/advanced/
+                    requests.post(self._url + "/_bulk", data=self._generate_chunks(), timeout=self._url_timeout)
+                except Exception:
+                    _logger.exception("Bulk-request error")
+                    time.sleep(1)
+            else:
+                time.sleep(1)
 
 
     ### Private ###
 
-    def _make_message(self, record):
-        msg = {
-            name: getattr(record, item)
-            for (name, item) in self._fields.items()
-            if hasattr(record, item)
-        }
-        msg[self._time_field] = datetime.datetime.utcfromtimestamp(record.created)
-        return msg
-
-    def _send_messages(self, messages):
-        # See for details:
-        #   http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/docs-bulk.html
-        bulks = []
-        for msg in messages:
-            bulks.append({  # Data metainfo: index, doctype
-                    "index": {
-                        "_index": self._index.format(**msg),
-                        "_type":  self._doctype.format(**msg),
-                    },
-                })
-            bulks.append(msg)  # Log record
-        data = ("\n".join(map(self._json_dumps, bulks)) + "\n").encode()
-        request = urllib.request.Request(self._url + "/_bulk", data=data)
-
-        retries = self._retries
-        while True:
+    def _generate_chunks(self):
+        for _ in range(self._session_size):
             try:
-                urllib.request.build_opener().open(request, timeout=self._url_timeout)
+                message = self._queue.get(timeout=self._session_timeout)
+            except queue.Empty:
                 break
-            except (socket.timeout, urllib.error.URLError):
-                if retries == 0:
-                    _logger.exception("ElasticHandler could not send %d log records after %d retries",
-                        len(messages), self._retries)
-                    break
-                retries -= 1
-                time.sleep(self._retry_interval)
+            index = {
+                # Data metainfo: index, doctype
+                "index": {
+                    "_index": self._index.format(**message),
+                    "_type":  self._doctype.format(**message),
+                },
+            }
+            data = "{index}\n{message}\n".format(
+                index=self._json_dumps(index),
+                message=self._json_dumps(message),
+            ).encode()
+            yield data
 
     def _json_dumps(self, obj):
         return json.dumps(obj, cls=_DatetimeEncoder, time_format=self._time_format)

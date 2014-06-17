@@ -14,26 +14,33 @@ import elog.records
 import logging
 import logging.config
 
-config = {"version": 1,
-          "elastic":
-               {"level": "DEBUG",
-                "class": "elog.handlers.ElasticHandler",
-                "time_field": "@timestamp",
-                "time_format": "%Y-%m-%dT%H:%M:%S.%f",
-                "url": "http://example.com:9200",
-                "index": "log-{@timestamp:%Y}-{@timestamp:%m}-{@timestamp:%d}",
-                "doctype": "example",
-                "fields":
-                    {"logger": "name",
-                    "level": "levelname",
-                    "msg": "msg",
-                    "args": "args",
-                    "file": "pathname",
-                    "line": "lineno",
-                    "pid": "process"}
-                }
-         }
-
+config = {
+    "version": 1,
+    "handlers": {
+        "elastic": {
+            "level":       "DEBUG",
+            "class":       "elog.handlers.ElasticHandler",
+            "time_field":  "@timestamp",
+            "time_format": "%Y-%m-%dT%H:%M:%S.%f",
+            "url":         "http://elasticlog.yandex.net:9200",
+            "url_timeout": 6,
+            "index":       "log-{@timestamp:%Y}-{@timestamp:%m}-{@timestamp:%d}",
+            "doctype":     "example",
+            "fields": {
+                "logger": "name",
+                "level":  "levelname",
+                "msg":    "msg",
+                "args":   "args",
+                "file":   "pathname",
+                "line":   "lineno",
+                "pid":    "process",
+            },
+    },
+    "root": {
+        "level": "DEBUG",
+        "handlers": ["elastic"],
+    },
+}
 
 logging.config.dictConfig(config)
 logging.setLogRecordFactory(elog.records.LogRecord)
