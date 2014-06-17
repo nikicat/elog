@@ -44,17 +44,14 @@ class ElasticHandler(logging.Handler, threading.Thread):  # pylint: disable=R090
             doctype
 
         Optional arguments:
-            fields         -- A dictionary with mapping LogRecord fields to ElasticSearch fields
-            time_field     -- Timestamp field name
-            time_format    -- Timestamp format
-            queue_size     -- The maximum size of the send queue, after which the caller thread is blocked
-            bulk_size      -- Number of messages in one session
-            retries        -- If the bulk will not be sent to N times, it will be lost
-            retry_interval -- Delay between attempts to send
-            url_timeout    -- Socket timeout
-            log_timeout    -- Maximum waiting time of sending
-            respawn_delay  -- If loop in the main thread a fails, it is restarted after X seconds, by default - 1
-            blocking       -- Block logging, if the queue is full, by default - False
+            fields          -- A dictionary with mapping LogRecord fields to ElasticSearch fields (None).
+            time_field      -- Timestamp field name ("time").
+            time_format     -- Timestamp format ("%s").
+            queue_size      -- The maximum size of the send queue, after which the caller thread is blocked (512).
+            session_size    -- Number of messages per session (512).
+            session_timeout -- Close the connection if there were no messages during this time (5).
+            url_timeout     -- Socket timeout.
+            blocking        -- Block logging, if the queue is full, (False).
 
         The class does not use any formatters.
     """
