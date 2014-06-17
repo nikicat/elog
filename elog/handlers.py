@@ -47,8 +47,8 @@ class ElasticHandler(logging.Handler, threading.Thread):  # pylint: disable=R090
             time_format     -- Timestamp format ("%s").
             queue_size      -- The maximum size of the send queue, after which the caller thread is blocked (512).
             session_size    -- Number of messages per session (512).
-            session_timeout -- Close the connection if there were no messages during this time (5).
-            url_timeout     -- Socket timeout.
+            session_timeout -- Close the connection if there were no messages during this time (5 seconds).
+            url_timeout     -- Socket timeout (default socket._GLOBAL_DEFAULT_TIMEOUT, in seconds).
             blocking        -- Block logging, if the queue is full, (False).
 
         The class does not use any formatters.
