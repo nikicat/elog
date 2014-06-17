@@ -134,7 +134,6 @@ class ElasticHandler(logging.Handler, threading.Thread):  # pylint: disable=R090
                     # http://docs.python-requests.org/en/latest/user/advanced/
                     requests.post(self._url + "/_bulk", data=self._generate_chunks(), timeout=self._url_timeout).text
                 except Exception:
-                    raise
                     _logger.exception("Bulk-request error")
                     time.sleep(1)
             else:
@@ -149,15 +148,17 @@ class ElasticHandler(logging.Handler, threading.Thread):  # pylint: disable=R090
                 message = self._queue.get(timeout=self._session_timeout)
             except queue.Empty:
                 break
-            data = ( "\n".join(map(self._json_dumps, [
-                    {  # Data metainfo: index, doctype
-                        "index": {
-                            "_index": self._index.format(**message),
-                            "_type":  self._doctype.format(**message),
-                        },
-                    },
-                    message,  # Log record
-                ])) + "\n" ).encode()
+            index = {
+                # Data metainfo: index, doctype
+                "index": {
+                    "_index": self._index.format(**message),
+                    "_type":  self._doctype.format(**message),
+                },
+            }
+            data = "{index}\n{message}\n".format(
+                index=self._json_dumps(index),
+                message=self._json_dumps(message),
+            ).encode()
             yield data
 
     def _json_dumps(self, obj):
