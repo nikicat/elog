@@ -31,6 +31,6 @@ if __name__ == "__main__":
         ],
 
         install_requires=[
-            "requests >= 2.3.0",
+            "requests >= 2.2.1",
         ]
     )
