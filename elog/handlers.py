@@ -73,7 +73,11 @@ class ElasticHandler(logging.Handler, threading.Thread):  # pylint: disable=R090
         self._url = url
         self._index = index
         self._doctype = doctype
-        self._fields = ( fields or {} )
+        self._fields = (fields or {
+            key: key for key in ("name", "msg", "args", "levelname", "levelno", "pathname", "filename", "module",
+                                 "exc_info", "exc_text", "stack_info", "lineno", "funcName", "created", "msecs",
+                                 "relativeCreated", "thread", "threadName", "processName", "process")
+        })
         self._time_field = time_field
         self._time_format = time_format
         self._session_size = session_size
