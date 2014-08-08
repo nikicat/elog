@@ -70,10 +70,10 @@ class ElasticHandler(logging.Handler, threading.Thread):  # pylint: disable=R090
         logging.Handler.__init__(self)
         threading.Thread.__init__(self)
 
-        if isinstance(url, (list, tuple, set)):
-            self._urls = url
-        else:
+        if isinstance(url, str):
             self._urls = (url,)
+        else:  # list, etc.
+            self._urls = tuple(url)
         self._index = index
         self._doctype = doctype
         self._fields = (fields or {
