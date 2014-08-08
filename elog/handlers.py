@@ -1,5 +1,6 @@
 import sys
 import threading
+import itertools
 import queue
 import socket
 import requests
@@ -71,9 +72,9 @@ class ElasticHandler(logging.Handler, threading.Thread):  # pylint: disable=R090
         threading.Thread.__init__(self)
 
         if isinstance(url, str):
-            self._urls = (url,)
+            self._urls = itertools.cycle((url,))
         else:  # list, etc.
-            self._urls = tuple(url)
+            self._urls = itertools.cycle(url)
         self._index = index
         self._doctype = doctype
         self._fields = (fields or {
@@ -88,7 +89,7 @@ class ElasticHandler(logging.Handler, threading.Thread):  # pylint: disable=R090
         self._url_timeout = url_timeout
         self._blocking = blocking
 
-        self._url_index = 0
+        self._url = next(self._urls)
         self._queue = queue.Queue(queue_size)
         self.start()
 
@@ -141,13 +142,13 @@ class ElasticHandler(logging.Handler, threading.Thread):  # pylint: disable=R090
                     # http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/docs-bulk.html
                     # http://docs.python-requests.org/en/latest/user/advanced/
                     requests.post(
-                        self._urls[self._url_index % len(self._urls)] + "/_bulk",
+                        self._url + "/_bulk",
                         data=self._generate_chunks(),
                         timeout=self._url_timeout,
                     )
                 except Exception:
                     _logger.exception("Bulk-request error")
-                    self._url_index += 1
+                    self._url = next(self._urls)
                     time.sleep(1)
             else:
                 time.sleep(1)
