@@ -141,15 +141,13 @@ class ElasticHandler(logging.Handler, threading.Thread):  # pylint: disable=R090
                     # http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/docs-bulk.html
                     # http://docs.python-requests.org/en/latest/user/advanced/
                     requests.post(
-                        self._urls[self._url_index] + "/_bulk",
+                        self._urls[self._url_index % len(self._urls)] + "/_bulk",
                         data=self._generate_chunks(),
                         timeout=self._url_timeout,
                     )
                 except Exception:
                     _logger.exception("Bulk-request error")
                     self._url_index += 1
-                    if self._url_index >= len(self._urls):
-                        self._url_index = 0  # Rotate upstreams
                     time.sleep(1)
             else:
                 time.sleep(1)
