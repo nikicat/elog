@@ -24,7 +24,7 @@ class ElasticHandler(logging.Handler, threading.Thread):  # pylint: disable=R090
                 class: elog.handlers.ElasticHandler
                 time_field: "@timestamp"
                 time_format: "%Y-%m-%dT%H:%M:%S.%f"
-                url: http://example.com:9200
+                urls: [http://example.com:9200]
                 index: log-{@timestamp:%Y}-{@timestamp:%m}-{@timestamp:%d}
                 doctype: gns2
                 fields:
@@ -56,7 +56,7 @@ class ElasticHandler(logging.Handler, threading.Thread):  # pylint: disable=R090
     """
     def __init__(  # pylint: disable=R0913
             self,
-            url,
+            urls,
             index,
             doctype,
             fields=None,
@@ -71,10 +71,7 @@ class ElasticHandler(logging.Handler, threading.Thread):  # pylint: disable=R090
         logging.Handler.__init__(self)
         threading.Thread.__init__(self)
 
-        if isinstance(url, str):
-            self._urls = itertools.cycle((url,))
-        else:  # list, etc.
-            self._urls = itertools.cycle(url)
+        self._urls = itertools.cycle(urls)
         self._index = index
         self._doctype = doctype
         self._fields = (fields or {
@@ -89,7 +86,7 @@ class ElasticHandler(logging.Handler, threading.Thread):  # pylint: disable=R090
         self._url_timeout = url_timeout
         self._blocking = blocking
 
-        self._url = next(self._urls)
+        self._current_url = next(self._urls)
         self._queue = queue.Queue(queue_size)
         self.start()
 
@@ -142,13 +139,13 @@ class ElasticHandler(logging.Handler, threading.Thread):  # pylint: disable=R090
                     # http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/docs-bulk.html
                     # http://docs.python-requests.org/en/latest/user/advanced/
                     requests.post(
-                        self._url + "/_bulk",
+                        self._current_url + "/_bulk",
                         data=self._generate_chunks(),
                         timeout=self._url_timeout,
                     )
                 except Exception:
                     _logger.exception("Bulk-request error")
-                    self._url = next(self._urls)
+                    self._current_url = next(self._urls)
                     time.sleep(1)
             else:
                 time.sleep(1)
