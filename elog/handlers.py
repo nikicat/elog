@@ -1,5 +1,6 @@
 import sys
 import threading
+import itertools
 import queue
 import socket
 import requests
@@ -23,7 +24,7 @@ class ElasticHandler(logging.Handler, threading.Thread):  # pylint: disable=R090
                 class: elog.handlers.ElasticHandler
                 time_field: "@timestamp"
                 time_format: "%Y-%m-%dT%H:%M:%S.%f"
-                url: http://example.com:9200
+                urls: [http://example.com:9200]
                 index: log-{@timestamp:%Y}-{@timestamp:%m}-{@timestamp:%d}
                 doctype: gns2
                 fields:
@@ -55,7 +56,7 @@ class ElasticHandler(logging.Handler, threading.Thread):  # pylint: disable=R090
     """
     def __init__(  # pylint: disable=R0913
             self,
-            url,
+            urls,
             index,
             doctype,
             fields=None,
@@ -70,7 +71,7 @@ class ElasticHandler(logging.Handler, threading.Thread):  # pylint: disable=R090
         logging.Handler.__init__(self)
         threading.Thread.__init__(self)
 
-        self._url = url
+        self._urls = itertools.cycle(urls)
         self._index = index
         self._doctype = doctype
         self._fields = (fields or {
@@ -127,6 +128,7 @@ class ElasticHandler(logging.Handler, threading.Thread):  # pylint: disable=R090
     ### Override ###
 
     def run(self):
+        current_url = next(self._urls)
         while self.continue_processing() or not self._queue.empty():
             # After sending a message in the log, we get the main thread object
             # and check if he is alive. If not - stop sending logs.
@@ -136,9 +138,14 @@ class ElasticHandler(logging.Handler, threading.Thread):  # pylint: disable=R090
                 try:
                     # http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/docs-bulk.html
                     # http://docs.python-requests.org/en/latest/user/advanced/
-                    requests.post(self._url + "/_bulk", data=self._generate_chunks(), timeout=self._url_timeout)
+                    requests.post(
+                        current_url + "/_bulk",
+                        data=self._generate_chunks(),
+                        timeout=self._url_timeout,
+                    )
                 except Exception:
                     _logger.exception("Bulk-request error")
+                    current_url = next(self._urls)
                     time.sleep(1)
             else:
                 time.sleep(1)
