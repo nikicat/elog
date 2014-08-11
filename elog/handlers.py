@@ -86,7 +86,6 @@ class ElasticHandler(logging.Handler, threading.Thread):  # pylint: disable=R090
         self._url_timeout = url_timeout
         self._blocking = blocking
 
-        self._current_url = next(self._urls)
         self._queue = queue.Queue(queue_size)
         self.start()
 
@@ -129,6 +128,7 @@ class ElasticHandler(logging.Handler, threading.Thread):  # pylint: disable=R090
     ### Override ###
 
     def run(self):
+        current_url = next(self._urls)
         while self.continue_processing() or not self._queue.empty():
             # After sending a message in the log, we get the main thread object
             # and check if he is alive. If not - stop sending logs.
@@ -139,13 +139,13 @@ class ElasticHandler(logging.Handler, threading.Thread):  # pylint: disable=R090
                     # http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/docs-bulk.html
                     # http://docs.python-requests.org/en/latest/user/advanced/
                     requests.post(
-                        self._current_url + "/_bulk",
+                        current_url + "/_bulk",
                         data=self._generate_chunks(),
                         timeout=self._url_timeout,
                     )
                 except Exception:
                     _logger.exception("Bulk-request error")
-                    self._current_url = next(self._urls)
+                    current_url = next(self._urls)
                     time.sleep(1)
             else:
                 time.sleep(1)
