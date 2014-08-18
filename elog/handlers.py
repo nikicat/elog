@@ -74,11 +74,7 @@ class ElasticHandler(logging.Handler, threading.Thread):  # pylint: disable=R090
         self._urls = itertools.cycle(urls)
         self._index = index
         self._doctype = doctype
-        self._fields = (fields or {
-            key: key for key in ("name", "msg", "args", "levelname", "levelno", "pathname", "filename", "module",
-                                 "exc_info", "exc_text", "stack_info", "lineno", "funcName", "created", "msecs",
-                                 "relativeCreated", "thread", "threadName", "processName", "process")
-        })
+        self._fields = fields
         self._time_field = time_field
         self._time_format = time_format
         self._session_size = session_size
@@ -96,11 +92,14 @@ class ElasticHandler(logging.Handler, threading.Thread):  # pylint: disable=R090
         # Formatters are not used.
         # While the application works - we accept the message to send.
         if self.continue_processing():
-            message = {
-                name: getattr(record, item)
-                for (name, item) in self._fields.items()
-                if hasattr(record, item)
-            }
+            if self._fields is not None:
+                message = {
+                    name: getattr(record, item)
+                    for (name, item) in self._fields.items()
+                    if hasattr(record, item)
+                }
+            else:
+                message = dict(record.__dict__)
             message[self._time_field] = datetime.datetime.utcfromtimestamp(record.created)
 
             if self._blocking:
