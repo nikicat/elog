@@ -8,7 +8,7 @@ import setuptools
 if __name__ == "__main__":
     setuptools.setup(
         name="elog",
-        version="0.8",
+        version="0.9",
         url="https://github.com/yandex-sysmon/elog",
         license="LGPLv3",
         author="Devaev Maxim",
