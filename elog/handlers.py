@@ -1,6 +1,7 @@
 import sys
 import threading
 import itertools
+import traceback
 import queue
 import socket
 import requests
@@ -8,10 +9,6 @@ import json
 import logging
 import datetime
 import time
-
-
-##### Private objects #####
-_logger = logging.getLogger(__name__)
 
 
 ##### Public classes #####
@@ -102,11 +99,11 @@ class ElasticHandler(logging.Handler, threading.Thread):  # pylint: disable=R090
                 message = dict(record.__dict__)
             message[self._time_field] = datetime.datetime.utcfromtimestamp(record.created)
 
-            if self._blocking:
+            if not self._blocking:
                 try:
                     self._queue.put(message, block=False)
                 except queue.Full:
-                    print("Dropping message '{}' because queue is full".format(message), file=sys.stderr)
+                    print("elog: dropping message '{}' because queue is full".format(message), file=sys.stderr)
             else:
                 self._queue.put(message)
 
@@ -143,7 +140,8 @@ class ElasticHandler(logging.Handler, threading.Thread):  # pylint: disable=R090
                         timeout=self._url_timeout,
                     )
                 except Exception:
-                    _logger.exception("Bulk-request error")
+                    print("elog: bulk-request error", file=sys.stderr)
+                    traceback.print_exc(file=sys.stderr)
                     current_url = next(self._urls)
                     time.sleep(1)
             else:
