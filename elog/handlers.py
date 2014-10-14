@@ -102,7 +102,7 @@ class ElasticHandler(logging.Handler, threading.Thread):  # pylint: disable=R090
                 message = dict(record.__dict__)
             message[self._time_field] = datetime.datetime.utcfromtimestamp(record.created)
 
-            if self._blocking:
+            if not self._blocking:
                 try:
                     self._queue.put(message, block=False)
                 except queue.Full:
