@@ -21,9 +21,7 @@ config = {
             "level":       "DEBUG",
             "class":       "elog.handlers.ElasticHandler",
             "time_field":  "@timestamp",
-            "time_format": "%Y-%m-%dT%H:%M:%S.%f",
-            "url":         "http://elasticlog.yandex.net:9200",
-            "url_timeout": 6,
+            "hosts":       {"host": "elasticlog.yandex.net", "port": 9200},
             "index":       "log-{@timestamp:%Y}-{@timestamp:%m}-{@timestamp:%d}",
             "doctype":     "example",
             "fields": {
