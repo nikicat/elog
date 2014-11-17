@@ -1,0 +1,18 @@
+[MASTER]
+ignore=.git
+
+[DESIGN]
+min-public-methods=0
+
+[MESSAGES CONTROL]
+disable=attribute-defined-outside-init,too-many-instance-attributes,bad-continuation,missing-docstring,star-args,broad-except
+
+[FORMAT]
+max-line-length=120
+
+[BASIC]
+# List of builtins function names that should not be used, separated by a comma
+bad-functions=
+
+# Regular expression which should only match correct module level names
+const-rgx=([a-zA-Z_][a-zA-Z0-9_]*)$

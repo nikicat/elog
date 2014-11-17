@@ -1,0 +1,23 @@
+interactions:
+- request:
+    body: !!binary |
+      eyJpbmRleCI6IHsiX2luZGV4IjogIi50ZXN0LWxvZy0yMDE0LTExLTE0IiwgIl90eXBlIjogInRl
+      c3QifX0KeyJhcmdzIjogW10sICJsb2dnZXIiOiAiVGVzdCIsICJtc2ciOiAidGVzdF9mb29fYmFy
+      X2JheiIsICJmaWxlIjogIi9ob21lL25icnlza2luL3NyYy9lbG9nL3Rlc3QvdGVzdF9tYWluLnB5
+      IiwgImxpbmUiOiAxMDEsICJsZXZlbCI6ICJERUJVRyIsICJwaWQiOiAzNTczLCAiQHRpbWVzdGFt
+      cCI6ICIyMDE0LTExLTE0VDIzOjU0OjM1LjIwMTk5NiJ9Cg==
+    headers:
+      Accept: ['*/*']
+      Accept-Encoding: ['gzip, deflate']
+      Connection: [keep-alive]
+      Content-Length: ['262']
+      User-Agent: [python-requests/2.4.3 CPython/3.4.2 Linux/3.15.7-1-aufs_friendly]
+    method: POST
+    uri: http://localhost:9200/_bulk
+  response:
+    body: {string: '{"took":11,"errors":false,"items":[{"create":{"_index":".test-log-2014-11-14","_type":"test","_id":"YqiRYfvsQXyqfcUAXAXaLQ","_version":1,"status":201}}]}'}
+    headers:
+      Content-Length: ['153']
+      Content-Type: [application/json; charset=UTF-8]
+    status: {code: 200, message: OK}
+version: 1

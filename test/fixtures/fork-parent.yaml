@@ -1,0 +1,19 @@
+interactions:
+- request:
+    body: null
+    headers:
+      Accept: ['*/*']
+      Accept-Encoding: ['gzip, deflate']
+      Connection: [keep-alive]
+      User-Agent: [python-requests/2.4.3 CPython/3.4.2 Linux/3.15.7-1-aufs_friendly]
+    method: GET
+    uri: http://localhost:9200/.test-log-2014-11-14/_search?size=1&q=msg%3Atest_foo_bar_baz
+  response:
+    body: {string: '{"took":77,"timed_out":false,"_shards":{"total":5,"successful":5,"failed":0},"hits":{"total":5,"max_score":0.5945348,"hits":[{"_index":".test-log-2014-11-14","_type":"test","_id":"ctr3EFFgSE2H410R5G820w","_score":0.5945348,"_source":{"@timestamp":
+        "2014-11-14T23:54:35.201996", "args": [], "msg": "test_foo_bar_baz", "logger":
+        "Test", "level": "DEBUG", "pid": 568, "line": 100, "file": "/home/nbryskin/src/elog/test/test_main.py"}}]}}'}
+    headers:
+      Content-Length: ['434']
+      Content-Type: [application/json; charset=UTF-8]
+    status: {code: 200, message: OK}
+version: 1
