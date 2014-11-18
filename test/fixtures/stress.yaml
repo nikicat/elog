@@ -1,0 +1,124 @@
+interactions:
+- request:
+    body: !!binary |
+      eyJpbmRleCI6IHsiX3R5cGUiOiAidGVzdCIsICJfaW5kZXgiOiAiLnRlc3QtbG9nLTIwMTQtMTEt
+      MTQifX0KeyJAdGltZXN0YW1wIjogIjIwMTQtMTEtMTRUMjM6NTQ6MzUuMjAxOTk2IiwgImFyZ3Mi
+      OiBbXSwgImxvZ2dlciI6ICJUZXN0IiwgImZpbGUiOiAiL2hvbWUvbmJyeXNraW4vc3JjL2Vsb2cv
+      dGVzdC90ZXN0X21haW4ucHkiLCAibGV2ZWwiOiAiREVCVUciLCAibGluZSI6IDExMywgIm1zZyI6
+      ICJ0ZXN0X2Zvb19iYXJfYmF6IiwgInBpZCI6IDQ0OTN9Cg==
+    headers:
+      Accept: ['*/*']
+      Accept-Encoding: ['gzip, deflate']
+      Connection: [keep-alive]
+      Content-Length: ['262']
+      User-Agent: [python-requests/2.4.3 CPython/3.4.2 Linux/3.15.7-1-aufs_friendly]
+    method: POST
+    uri: http://localhost:9200/_bulk
+  response:
+    body: {string: '{"took":9,"errors":false,"items":[{"create":{"_index":".test-log-2014-11-14","_type":"test","_id":"GUXDEtP2SIeLnWdv_FfTPQ","_version":1,"status":201}}]}'}
+    headers:
+      Content-Length: ['152']
+      Content-Type: [application/json; charset=UTF-8]
+    status: {code: 200, message: OK}
+- request:
+    body: !!binary |
+      eyJpbmRleCI6IHsiX3R5cGUiOiAidGVzdCIsICJfaW5kZXgiOiAiLnRlc3QtbG9nLTIwMTQtMTEt
+      MTQifX0KeyJAdGltZXN0YW1wIjogIjIwMTQtMTEtMTRUMjM6NTQ6MzUuMjAxOTk2IiwgImFyZ3Mi
+      OiBbXSwgImxvZ2dlciI6ICJUZXN0IiwgImZpbGUiOiAiL2hvbWUvbmJyeXNraW4vc3JjL2Vsb2cv
+      dGVzdC90ZXN0X21haW4ucHkiLCAibGV2ZWwiOiAiREVCVUciLCAibGluZSI6IDExMywgIm1zZyI6
+      ICJ0ZXN0X2Zvb19iYXJfYmF6IiwgInBpZCI6IDQ0OTN9CnsiaW5kZXgiOiB7Il90eXBlIjogInRl
+      c3QiLCAiX2luZGV4IjogIi50ZXN0LWxvZy0yMDE0LTExLTE0In19CnsiQHRpbWVzdGFtcCI6ICIy
+      MDE0LTExLTE0VDIzOjU0OjM1LjIwMTk5NiIsICJhcmdzIjogW10sICJsb2dnZXIiOiAiVGVzdCIs
+      ICJmaWxlIjogIi9ob21lL25icnlza2luL3NyYy9lbG9nL3Rlc3QvdGVzdF9tYWluLnB5IiwgImxl
+      dmVsIjogIkRFQlVHIiwgImxpbmUiOiAxMTMsICJtc2ciOiAidGVzdF9mb29fYmFyX2JheiIsICJw
+      aWQiOiA0NDkzfQp7ImluZGV4IjogeyJfdHlwZSI6ICJ0ZXN0IiwgIl9pbmRleCI6ICIudGVzdC1s
+      b2ctMjAxNC0xMS0xNCJ9fQp7IkB0aW1lc3RhbXAiOiAiMjAxNC0xMS0xNFQyMzo1NDozNS4yMDE5
+      OTYiLCAiYXJncyI6IFtdLCAibG9nZ2VyIjogIlRlc3QiLCAiZmlsZSI6ICIvaG9tZS9uYnJ5c2tp
+      bi9zcmMvZWxvZy90ZXN0L3Rlc3RfbWFpbi5weSIsICJsZXZlbCI6ICJERUJVRyIsICJsaW5lIjog
+      MTEzLCAibXNnIjogInRlc3RfZm9vX2Jhcl9iYXoiLCAicGlkIjogNDQ5M30KeyJpbmRleCI6IHsi
+      X3R5cGUiOiAidGVzdCIsICJfaW5kZXgiOiAiLnRlc3QtbG9nLTIwMTQtMTEtMTQifX0KeyJAdGlt
+      ZXN0YW1wIjogIjIwMTQtMTEtMTRUMjM6NTQ6MzUuMjAxOTk2IiwgImFyZ3MiOiBbXSwgImxvZ2dl
+      ciI6ICJUZXN0IiwgImZpbGUiOiAiL2hvbWUvbmJyeXNraW4vc3JjL2Vsb2cvdGVzdC90ZXN0X21h
+      aW4ucHkiLCAibGV2ZWwiOiAiREVCVUciLCAibGluZSI6IDExMywgIm1zZyI6ICJ0ZXN0X2Zvb19i
+      YXJfYmF6IiwgInBpZCI6IDQ0OTN9CnsiaW5kZXgiOiB7Il90eXBlIjogInRlc3QiLCAiX2luZGV4
+      IjogIi50ZXN0LWxvZy0yMDE0LTExLTE0In19CnsiQHRpbWVzdGFtcCI6ICIyMDE0LTExLTE0VDIz
+      OjU0OjM1LjIwMTk5NiIsICJhcmdzIjogW10sICJsb2dnZXIiOiAiVGVzdCIsICJmaWxlIjogIi9o
+      b21lL25icnlza2luL3NyYy9lbG9nL3Rlc3QvdGVzdF9tYWluLnB5IiwgImxldmVsIjogIkRFQlVH
+      IiwgImxpbmUiOiAxMTMsICJtc2ciOiAidGVzdF9mb29fYmFyX2JheiIsICJwaWQiOiA0NDkzfQp7
+      ImluZGV4IjogeyJfdHlwZSI6ICJ0ZXN0IiwgIl9pbmRleCI6ICIudGVzdC1sb2ctMjAxNC0xMS0x
+      NCJ9fQp7IkB0aW1lc3RhbXAiOiAiMjAxNC0xMS0xNFQyMzo1NDozNS4yMDE5OTYiLCAiYXJncyI6
+      IFtdLCAibG9nZ2VyIjogIlRlc3QiLCAiZmlsZSI6ICIvaG9tZS9uYnJ5c2tpbi9zcmMvZWxvZy90
+      ZXN0L3Rlc3RfbWFpbi5weSIsICJsZXZlbCI6ICJERUJVRyIsICJsaW5lIjogMTEzLCAibXNnIjog
+      InRlc3RfZm9vX2Jhcl9iYXoiLCAicGlkIjogNDQ5M30KeyJpbmRleCI6IHsiX3R5cGUiOiAidGVz
+      dCIsICJfaW5kZXgiOiAiLnRlc3QtbG9nLTIwMTQtMTEtMTQifX0KeyJAdGltZXN0YW1wIjogIjIw
+      MTQtMTEtMTRUMjM6NTQ6MzUuMjAxOTk2IiwgImFyZ3MiOiBbXSwgImxvZ2dlciI6ICJUZXN0Iiwg
+      ImZpbGUiOiAiL2hvbWUvbmJyeXNraW4vc3JjL2Vsb2cvdGVzdC90ZXN0X21haW4ucHkiLCAibGV2
+      ZWwiOiAiREVCVUciLCAibGluZSI6IDExMywgIm1zZyI6ICJ0ZXN0X2Zvb19iYXJfYmF6IiwgInBp
+      ZCI6IDQ0OTN9CnsiaW5kZXgiOiB7Il90eXBlIjogInRlc3QiLCAiX2luZGV4IjogIi50ZXN0LWxv
+      Zy0yMDE0LTExLTE0In19CnsiQHRpbWVzdGFtcCI6ICIyMDE0LTExLTE0VDIzOjU0OjM1LjIwMTk5
+      NiIsICJhcmdzIjogW10sICJsb2dnZXIiOiAiVGVzdCIsICJmaWxlIjogIi9ob21lL25icnlza2lu
+      L3NyYy9lbG9nL3Rlc3QvdGVzdF9tYWluLnB5IiwgImxldmVsIjogIkRFQlVHIiwgImxpbmUiOiAx
+      MTMsICJtc2ciOiAidGVzdF9mb29fYmFyX2JheiIsICJwaWQiOiA0NDkzfQp7ImluZGV4IjogeyJf
+      dHlwZSI6ICJ0ZXN0IiwgIl9pbmRleCI6ICIudGVzdC1sb2ctMjAxNC0xMS0xNCJ9fQp7IkB0aW1l
+      c3RhbXAiOiAiMjAxNC0xMS0xNFQyMzo1NDozNS4yMDE5OTYiLCAiYXJncyI6IFtdLCAibG9nZ2Vy
+      IjogIlRlc3QiLCAiZmlsZSI6ICIvaG9tZS9uYnJ5c2tpbi9zcmMvZWxvZy90ZXN0L3Rlc3RfbWFp
+      bi5weSIsICJsZXZlbCI6ICJERUJVRyIsICJsaW5lIjogMTEzLCAibXNnIjogInRlc3RfZm9vX2Jh
+      cl9iYXoiLCAicGlkIjogNDQ5M30KeyJpbmRleCI6IHsiX3R5cGUiOiAidGVzdCIsICJfaW5kZXgi
+      OiAiLnRlc3QtbG9nLTIwMTQtMTEtMTQifX0KeyJAdGltZXN0YW1wIjogIjIwMTQtMTEtMTRUMjM6
+      NTQ6MzUuMjAxOTk2IiwgImFyZ3MiOiBbXSwgImxvZ2dlciI6ICJUZXN0IiwgImZpbGUiOiAiL2hv
+      bWUvbmJyeXNraW4vc3JjL2Vsb2cvdGVzdC90ZXN0X21haW4ucHkiLCAibGV2ZWwiOiAiREVCVUci
+      LCAibGluZSI6IDExMywgIm1zZyI6ICJ0ZXN0X2Zvb19iYXJfYmF6IiwgInBpZCI6IDQ0OTN9Cg==
+    headers:
+      Accept: ['*/*']
+      Accept-Encoding: ['gzip, deflate']
+      Connection: [keep-alive]
+      Content-Length: ['2620']
+      User-Agent: [python-requests/2.4.3 CPython/3.4.2 Linux/3.15.7-1-aufs_friendly]
+    method: POST
+    uri: http://localhost:9200/_bulk
+  response:
+    body: {string: '{"took":12,"errors":false,"items":[{"create":{"_index":".test-log-2014-11-14","_type":"test","_id":"4Y-HuWcxS7e_a6UdkPfWeg","_version":1,"status":201}},{"create":{"_index":".test-log-2014-11-14","_type":"test","_id":"R2IQ5EzFQSezVnTGdGsZ0g","_version":1,"status":201}},{"create":{"_index":".test-log-2014-11-14","_type":"test","_id":"Dn8S1CBtQX2u-W4IkczInA","_version":1,"status":201}},{"create":{"_index":".test-log-2014-11-14","_type":"test","_id":"ChIcN6JjSkeRUl0VhXqOqQ","_version":1,"status":201}},{"create":{"_index":".test-log-2014-11-14","_type":"test","_id":"xIIb-012TZOKYp4Zv72XdA","_version":1,"status":201}},{"create":{"_index":".test-log-2014-11-14","_type":"test","_id":"c9Mx3txtTxWRpDczqmt3Kw","_version":1,"status":201}},{"create":{"_index":".test-log-2014-11-14","_type":"test","_id":"Hdn-AceiTGKqjAWPlhYEMg","_version":1,"status":201}},{"create":{"_index":".test-log-2014-11-14","_type":"test","_id":"Lixf99JiTM2dRp13uRWePg","_version":1,"status":201}},{"create":{"_index":".test-log-2014-11-14","_type":"test","_id":"FClx9e9OSVW5oYGWasGpAw","_version":1,"status":201}},{"create":{"_index":".test-log-2014-11-14","_type":"test","_id":"-RF7E4wLRjSf0RZDa5HMQA","_version":1,"status":201}}]}'}
+    headers:
+      Content-Length: ['1206']
+      Content-Type: [application/json; charset=UTF-8]
+    status: {code: 200, message: OK}
+- request:
+    body: null
+    headers:
+      Accept: ['*/*']
+      Accept-Encoding: ['gzip, deflate']
+      Connection: [keep-alive]
+      User-Agent: [python-requests/2.4.3 CPython/3.4.2 Linux/3.15.7-1-aufs_friendly]
+    method: GET
+    uri: http://localhost:9200/.test-log-2014-11-14/_search?q=msg%3Atest_foo_bar_baz&size=11
+  response:
+    body: {string: '{"took":58,"timed_out":false,"_shards":{"total":5,"successful":5,"failed":0},"hits":{"total":16,"max_score":0.81767845,"hits":[{"_index":".test-log-2014-11-14","_type":"test","_id":"ctr3EFFgSE2H410R5G820w","_score":0.81767845,"_source":{"@timestamp":
+        "2014-11-14T23:54:35.201996", "args": [], "msg": "test_foo_bar_baz", "logger":
+        "Test", "level": "DEBUG", "pid": 568, "line": 100, "file": "/home/nbryskin/src/elog/test/test_main.py"}},{"_index":".test-log-2014-11-14","_type":"test","_id":"9bdkbd34QGGA022TOqukZg","_score":0.81767845,"_source":{"@timestamp":
+        "2014-11-14T23:54:35.201996", "logger": "Test", "msg": "test_foo_bar_baz",
+        "level": "DEBUG", "file": "/home/nbryskin/src/elog/test/test_main.py", "pid":
+        2839, "line": 100, "args": []}},{"_index":".test-log-2014-11-14","_type":"test","_id":"R2IQ5EzFQSezVnTGdGsZ0g","_score":0.81767845,"_source":{"@timestamp":
+        "2014-11-14T23:54:35.201996", "args": [], "logger": "Test", "file": "/home/nbryskin/src/elog/test/test_main.py",
+        "level": "DEBUG", "line": 113, "msg": "test_foo_bar_baz", "pid": 4493}},{"_index":".test-log-2014-11-14","_type":"test","_id":"Dn8S1CBtQX2u-W4IkczInA","_score":0.81767845,"_source":{"@timestamp":
+        "2014-11-14T23:54:35.201996", "args": [], "logger": "Test", "file": "/home/nbryskin/src/elog/test/test_main.py",
+        "level": "DEBUG", "line": 113, "msg": "test_foo_bar_baz", "pid": 4493}},{"_index":".test-log-2014-11-14","_type":"test","_id":"FClx9e9OSVW5oYGWasGpAw","_score":0.81767845,"_source":{"@timestamp":
+        "2014-11-14T23:54:35.201996", "args": [], "logger": "Test", "file": "/home/nbryskin/src/elog/test/test_main.py",
+        "level": "DEBUG", "line": 113, "msg": "test_foo_bar_baz", "pid": 4493}},{"_index":".test-log-2014-11-14","_type":"test","_id":"YqiRYfvsQXyqfcUAXAXaLQ","_score":0.81767845,"_source":{"args":
+        [], "logger": "Test", "msg": "test_foo_bar_baz", "file": "/home/nbryskin/src/elog/test/test_main.py",
+        "line": 101, "level": "DEBUG", "pid": 3573, "@timestamp": "2014-11-14T23:54:35.201996"}},{"_index":".test-log-2014-11-14","_type":"test","_id":"GUXDEtP2SIeLnWdv_FfTPQ","_score":0.81767845,"_source":{"@timestamp":
+        "2014-11-14T23:54:35.201996", "args": [], "logger": "Test", "file": "/home/nbryskin/src/elog/test/test_main.py",
+        "level": "DEBUG", "line": 113, "msg": "test_foo_bar_baz", "pid": 4493}},{"_index":".test-log-2014-11-14","_type":"test","_id":"4Y-HuWcxS7e_a6UdkPfWeg","_score":0.81767845,"_source":{"@timestamp":
+        "2014-11-14T23:54:35.201996", "args": [], "logger": "Test", "file": "/home/nbryskin/src/elog/test/test_main.py",
+        "level": "DEBUG", "line": 113, "msg": "test_foo_bar_baz", "pid": 4493}},{"_index":".test-log-2014-11-14","_type":"test","_id":"xIIb-012TZOKYp4Zv72XdA","_score":0.81767845,"_source":{"@timestamp":
+        "2014-11-14T23:54:35.201996", "args": [], "logger": "Test", "file": "/home/nbryskin/src/elog/test/test_main.py",
+        "level": "DEBUG", "line": 113, "msg": "test_foo_bar_baz", "pid": 4493}},{"_index":".test-log-2014-11-14","_type":"test","_id":"Hdn-AceiTGKqjAWPlhYEMg","_score":0.81767845,"_source":{"@timestamp":
+        "2014-11-14T23:54:35.201996", "args": [], "logger": "Test", "file": "/home/nbryskin/src/elog/test/test_main.py",
+        "level": "DEBUG", "line": 113, "msg": "test_foo_bar_baz", "pid": 4493}},{"_index":".test-log-2014-11-14","_type":"test","_id":"k_azJMITTyuNG8Sk4AHj4Q","_score":0.7768564,"_source":{"msg":
+        "test_foo_bar_baz", "args": [], "level": "DEBUG", "line": 100, "logger": "Test",
+        "file": "/home/nbryskin/src/elog/test/test_main.py", "pid": 1192, "@timestamp":
+        "2014-11-14T23:54:35.201996"}}]}}'}
+    headers:
+      Content-Length: ['3526']
+      Content-Type: [application/json; charset=UTF-8]
+    status: {code: 200, message: OK}
+version: 1

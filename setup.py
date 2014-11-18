@@ -1,14 +1,10 @@
-#!/usr/bin/env python
-
-
 import setuptools
 
 
-##### Main #####
 if __name__ == "__main__":
     setuptools.setup(
         name="elog",
-        version="0.9",
+        version="1.0",
         url="https://github.com/yandex-sysmon/elog",
         license="LGPLv3",
         author="Devaev Maxim",
@@ -31,6 +27,7 @@ if __name__ == "__main__":
         ],
 
         install_requires=[
-            "requests >= 2.2.1",
-        ]
+            "elasticsearch",
+            "requests",
+        ],
     )

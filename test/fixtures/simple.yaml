@@ -1,0 +1,40 @@
+interactions:
+- request:
+    body: !!binary |
+      eyJpbmRleCI6IHsiX3R5cGUiOiAidGVzdCIsICJfaW5kZXgiOiAiLnRlc3QtbG9nLTIwMTQtMTEt
+      MTQifX0KeyJwaWQiOiA2MTExLCAiZmlsZSI6ICIvaG9tZS9uYnJ5c2tpbi9zcmMvZWxvZy90ZXN0
+      L3Rlc3RfbWFpbi5weSIsICJhcmdzIjogW10sICJsaW5lIjogNzIsICJAdGltZXN0YW1wIjogIjIw
+      MTQtMTEtMTRUMjM6NTQ6MzUuMjAxOTk2IiwgIm1zZyI6ICJ0ZXN0X2Zvb19iYXJfYmF6IiwgImxv
+      Z2dlciI6ICJUZXN0IiwgImxldmVsIjogIkRFQlVHIn0K
+    headers:
+      Accept: ['*/*']
+      Accept-Encoding: ['gzip, deflate']
+      Connection: [keep-alive]
+      Content-Length: ['261']
+      User-Agent: [python-requests/2.4.3 CPython/3.4.2 Linux/3.15.7-1-aufs_friendly]
+    method: POST
+    uri: http://localhost:9200/_bulk
+  response:
+    body: {string: '{"took":9,"errors":false,"items":[{"create":{"_index":".test-log-2014-11-14","_type":"test","_id":"Hlyk-rf9RdyesmmJUG1CHw","_version":1,"status":201}}]}'}
+    headers:
+      Content-Length: ['152']
+      Content-Type: [application/json; charset=UTF-8]
+    status: {code: 200, message: OK}
+- request:
+    body: null
+    headers:
+      Accept: ['*/*']
+      Accept-Encoding: ['gzip, deflate']
+      Connection: [keep-alive]
+      User-Agent: [python-requests/2.4.3 CPython/3.4.2 Linux/3.15.7-1-aufs_friendly]
+    method: GET
+    uri: http://localhost:9200/.test-log-2014-11-14/_search?q=msg%3Atest_foo_bar_baz&size=1
+  response:
+    body: {string: '{"took":55,"timed_out":false,"_shards":{"total":5,"successful":5,"failed":0},"hits":{"total":17,"max_score":0.84584934,"hits":[{"_index":".test-log-2014-11-14","_type":"test","_id":"ctr3EFFgSE2H410R5G820w","_score":0.84584934,"_source":{"@timestamp":
+        "2014-11-14T23:54:35.201996", "args": [], "msg": "test_foo_bar_baz", "logger":
+        "Test", "level": "DEBUG", "pid": 568, "line": 100, "file": "/home/nbryskin/src/elog/test/test_main.py"}}]}}'}
+    headers:
+      Content-Length: ['437']
+      Content-Type: [application/json; charset=UTF-8]
+    status: {code: 200, message: OK}
+version: 1

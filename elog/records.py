@@ -5,7 +5,6 @@ import functools
 import time
 
 
-##### Public classes #####
 class LogRecord(logging.LogRecord):
     def __init__(self, *args, **kwargs):
         logging.LogRecord.__init__(self, *args, **kwargs)
@@ -13,7 +12,6 @@ class LogRecord(logging.LogRecord):
         self.node = platform.uname()[1]  # Nodename from uname
 
 
-##### Private methods #####
 @functools.lru_cache(1)
 def _cached_getfqdn(_):
     return socket.getfqdn()
