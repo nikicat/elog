@@ -101,9 +101,18 @@ def test_fork(elastic, logger):
 def test_stress(elastic, logger, capsys):
     count = 20
     msg = get_message()
-    for _ in range(count):
-        logger.debug(msg)
-    out, err = capsys.readouterr()
-    dropped = err.count("queue is full, dropping message")
-    assert dropped > 0
-    check(elastic, msg, count - dropped)
+    # Patch logger
+    origsendloop = elog.handlers.ElasticHandler._sendloop
+    try:
+        def delayedsendloop(self):
+            time.sleep(5)
+            return origsendloop(self)
+        elog.handlers.ElasticHandler._sendloop = delayedsendloop
+        for _ in range(count):
+            logger.debug(msg)
+        out, err = capsys.readouterr()
+        dropped = err.count("queue is full, dropping message")
+        assert dropped > 0
+        check(elastic, msg, count - dropped)
+    finally:
+        elog.handlers.ElasticHandler._sendloop = origsendloop
