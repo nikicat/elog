@@ -15,10 +15,9 @@ import elog.handlers
 
 elog.handlers.debug = True
 vcr = VCR(cassette_library_dir='test/fixtures/')
-# Monkey patch ElasticHandler to enable VCRPy for it's requests
-#elog.handlers.ElasticHandler._sendloop = vcr.use_cassette('elastichandler.yaml')(elog.handlers.ElasticHandler._sendloop)
 elasticsearch_host = {'host': 'localhost', 'port': 9200}
 index_pattern = ".test-log-{@timestamp:%Y}-{@timestamp:%m}-{@timestamp:%d}"
+
 
 @pytest.fixture
 def logger():
@@ -26,14 +25,14 @@ def logger():
         "version": 1,
         "handlers": {
             "elastic": {
-                 "level": "DEBUG",
-                 "class": "elog.handlers.ElasticHandler",
-                 "time_field": "@timestamp",
-                 "hosts": [elasticsearch_host],
-                 "index": index_pattern,
-                 "doctype": "test",
-                 "queue_size": 10,
-             },
+                "level": "DEBUG",
+                "class": "elog.handlers.ElasticHandler",
+                "time_field": "@timestamp",
+                "hosts": [elasticsearch_host],
+                "index": index_pattern,
+                "doctype": "test",
+                "queue_size": 10,
+            },
         },
         'loggers': {"Test": {
             'level': 'DEBUG',
@@ -48,7 +47,10 @@ def logger():
 @vcr.use_cassette('elastic-fixture.yaml')
 @pytest.fixture
 def elastic():
-    client = elasticsearch.Elasticsearch(hosts=[elasticsearch_host], connection_class=elasticsearch.RequestsHttpConnection)
+    client = elasticsearch.Elasticsearch(
+        hosts=[elasticsearch_host],
+        connection_class=elasticsearch.RequestsHttpConnection,
+    )
     client.indices.delete(index=get_index(), ignore=404)
     return client
 
@@ -71,7 +73,6 @@ def get_index():
 def check(elastic, msg, count=1):
     # Sleep some time while elasticsearch indexes data
     time.sleep(15)
-    #elastic.indices.refresh(index=get_index)
     resp = elastic.search(index=get_index(), q='msg:{}'.format(msg), size=count)
     assert len(resp['hits']['hits']) == count
     for found_msg in resp['hits']['hits']:
