@@ -30,7 +30,6 @@ class ElasticHandler(logging.Handler):
             elastic:
                 level: DEBUG
                 class: elog.handlers.ElasticHandler
-                time_field: "@timestamp"
                 hosts:
                     host: example.com
                     port: 9200
@@ -45,6 +44,7 @@ class ElasticHandler(logging.Handler):
 
         Optional arguments:
             time_field      -- Timestamp field name ("time").
+            depth           -- Dictionaries nested deeper than this value will be serialized as JSON strings.
             queue_size      -- The maximum size of the send queue, after which the caller thread is blocked (2048).
             bulk_size       -- Number of messages per bulk (512).
             blocking        -- Block logging, if the queue is full, (False).
@@ -56,7 +56,8 @@ class ElasticHandler(logging.Handler):
         hosts,
         index,
         doctype,
-        time_field="time",
+        time_field="@timestamp",
+        depth=2,
         queue_size=2048,
         bulk_size=512,
         max_retries=sys.maxsize,
@@ -67,6 +68,7 @@ class ElasticHandler(logging.Handler):
         self._index = index
         self._doctype = doctype
         self._time_field = time_field
+        self._depth = depth
         self._bulk_size = bulk_size
         self._blocking = blocking
         self._elasticsearch = elasticsearch.Elasticsearch(
@@ -82,14 +84,20 @@ class ElasticHandler(logging.Handler):
     def emit(self, record):
         # Formatters are not used.
         # While the application works - we accept the message to send.
-        def convert(value):
+        def convert(value, depth):
             if isinstance(value, (str, int, float, bool, datetime.datetime)):
                 return value
             if isinstance(value, (dict, list, set)):
-                return json.dumps(value)
+                if depth > 0:
+                    if isinstance(value, dict):
+                        return {key: convert(subvalue, depth-1) for key, subvalue in value.items()}
+                    else:
+                        return [convert(subvalue, depth-1) for subvalue in value]
+                else:
+                    return json.dumps(value)
             else:
                 return repr(value)
-        message = {name: convert(value) for name, value in vars(record).items()}
+        message = convert(vars(record), self._depth)
         message[self._time_field] = datetime.datetime.utcfromtimestamp(record.created)
 
         if not self._blocking:
