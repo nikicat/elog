@@ -33,15 +33,6 @@ def logger():
                  "index": index_pattern,
                  "doctype": "test",
                  "queue_size": 10,
-                 "fields": {
-                     "logger": "name",
-                     "level": "levelname",
-                     "msg": "msg",
-                     "args": "args",
-                     "file": "pathname",
-                     "line": "lineno",
-                     "pid": "process",
-                  },
              },
         },
         'loggers': {"Test": {

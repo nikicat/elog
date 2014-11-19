@@ -5,6 +5,7 @@ import queue
 import logging
 import datetime
 import os
+import json
 
 import elasticsearch
 import elasticsearch.helpers
@@ -35,14 +36,6 @@ class ElasticHandler(logging.Handler):
                     port: 9200
                 index: log-{@timestamp:%Y}-{@timestamp:%m}-{@timestamp:%d}
                 doctype: elog
-                fields:
-                    logger:    name
-                    level:     levelname
-                    msg:       msg
-                    args:      args
-                    file:      pathname
-                    line:      lineno
-                    pid:       process
             ...
 
         Required arguments:
@@ -51,7 +44,6 @@ class ElasticHandler(logging.Handler):
             doctype
 
         Optional arguments:
-            fields          -- A dictionary with mapping LogRecord fields to ElasticSearch fields (None).
             time_field      -- Timestamp field name ("time").
             queue_size      -- The maximum size of the send queue, after which the caller thread is blocked (2048).
             bulk_size       -- Number of messages per bulk (512).
@@ -64,7 +56,6 @@ class ElasticHandler(logging.Handler):
         hosts,
         index,
         doctype,
-        fields=None,
         time_field="time",
         queue_size=2048,
         bulk_size=512,
@@ -75,7 +66,6 @@ class ElasticHandler(logging.Handler):
 
         self._index = index
         self._doctype = doctype
-        self._fields = fields
         self._time_field = time_field
         self._bulk_size = bulk_size
         self._blocking = blocking
@@ -92,14 +82,14 @@ class ElasticHandler(logging.Handler):
     def emit(self, record):
         # Formatters are not used.
         # While the application works - we accept the message to send.
-        if self._fields is not None:
-            message = {
-                name: getattr(record, item)
-                for (name, item) in self._fields.items()
-                if hasattr(record, item)
-            }
-        else:
-            message = vars(record).copy()
+        def convert(value):
+            if isinstance(value, (str, int, float, bool, datetime.datetime)):
+                return value
+            if isinstance(value, (dict, list, set)):
+                return json.dumps(value)
+            else:
+                return repr(value)
+        message = {name: convert(value) for name, value in vars(record).items()}
         message[self._time_field] = datetime.datetime.utcfromtimestamp(record.created)
 
         if not self._blocking:
